@@ -33,4 +33,4 @@ const Validadores: Interface_Validadores = {
 
 
 
-export default Validadores;
+export default {Validadores};
