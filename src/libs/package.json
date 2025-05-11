@@ -1,0 +1,76 @@
+{
+
+    "name": "gemi-lib-hooks",
+
+    "version": "1.0.9",
+
+    "main": "dist/index.js",
+
+    "module": "dist/index.mjs",
+
+    "types": "dist/types/index.d.ts",
+
+    "files": [
+
+        "./dist",
+
+        "./LICENSE",
+
+        "./README.md",
+
+        "./package.json"
+
+    ],
+
+    "scripts": {
+
+        "build": "tsup index.ts --format cjs,esm --out-dir dist && tsc --emitDeclarationOnly",
+
+        "prepare": "npm run build"
+
+    },
+
+    "keywords": [
+
+        "react",
+
+        "validadores",
+
+        "propTypes",
+
+        "typescript"
+
+    ],
+
+    "repository": {
+
+        "type": "git",
+
+        "url": "https://github.com/geminiscode/gemi-lib-hooks.git",
+
+        "author": "geminiscode <geminiscode@gmail.com>",
+
+        "license": "MIT",
+
+        "description": "",
+
+        "devDependencies": {
+
+            "tsup": "^8.4.0",
+
+            "typescript": "^5.8.3"
+
+        }
+
+    },
+
+    "devDependencies": {
+
+        "tsup": "^8.4.0",
+
+        "typescript": "^5.8.3"
+
+    }
+
+}
+
