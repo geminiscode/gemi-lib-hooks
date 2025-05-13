@@ -2,9 +2,14 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import { Validadores } from './libs/index'
 
 function App() {
   const [count, setCount] = useState(0)
+  
+  console.log(Validadores.string.required()(''))
+  console.log(Validadores.number.between(0,10)(count))
+  console.log(Validadores.boolean.required()(false))
 
   return (
     <>
