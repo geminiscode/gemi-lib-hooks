@@ -6,10 +6,24 @@ import { Validadores } from './libs/index'
 
 function App() {
   const [count, setCount] = useState(0)
-  
-  console.log(Validadores.string.required()(''))
-  console.log(Validadores.number.between(0,10)(count))
+
+  console.log(Validadores.string.required()('hola'))
+  console.log(Validadores.number.between(0, 10)(count))
   console.log(Validadores.boolean.required()(false))
+  
+
+  const resultado = Validadores.shape({
+    nombre: Validadores.string.required().max(10),
+    edad: Validadores.number.required().between(0, 100),
+    activo: Validadores.boolean.required(),
+  })({
+    nombre: 'Juan',
+    edad: 25,
+    activo: true,
+  });
+
+  console.log(resultado)
+  console.log(Validadores.array.required().min(2).of(Validadores.string.required().min(3)) (['hola', 'mundo']))
 
   return (
     <>
