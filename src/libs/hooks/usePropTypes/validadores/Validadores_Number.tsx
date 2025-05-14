@@ -260,4 +260,5 @@ function Build_Validadores_Number(): Interface_Validadores_Number {
 
 
 
+export type { Interface_Validadores_Number };
 export const Validadores_Number = Build_Validadores_Number();

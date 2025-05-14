@@ -164,4 +164,5 @@ function Build_Validadores_Boolean(): Interface_Validadores_Boolean {
 
 
 
+export type { Interface_Validadores_Boolean };
 export const Validadores_Boolean = Build_Validadores_Boolean();

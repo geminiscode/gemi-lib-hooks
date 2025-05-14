@@ -290,5 +290,5 @@ function Build_Validadores_String(): Interface_Validadores_String {
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 
-
+export type { Interface_Validadores_String };
 export const Validadores_String = Build_Validadores_String();
