@@ -7,32 +7,32 @@ import { Validadores } from './libs/index'
 function App() {
     const [count, setCount] = useState(0)
 
-    console.log(Validadores.string.required()('hola'))
-    console.log(Validadores.number.between(0, 10)(count))
-    console.log(Validadores.boolean.required()(false))
     const schema = {
-        nombre: Validadores.string.required('El nombre es obligatorio'),
-        edad: Validadores.number.min(0, 'La edad no puede ser negativa'),
-        activo: Validadores.boolean.true('Debe ser verdadero'),
+        nombre: Validadores.string.required('Nombre obligatorio'),
+        edad: Validadores.number.min(-10, 'La edad no puede ser negativa'),
     };
-    
-    const validarUsuario = Validadores.object.scheme(schema).allowLess();
 
+    const validarUsuario = Validadores.object.allowMoreFields();
 
-    // Caso exitoso
-    console.log(validarUsuario({
+    console.log(1, validarUsuario({
         nombre: 'Juan',
+    }, schema));
+
+    console.log(2, validarUsuario({
         edad: 25,
-        activo: true,
-    })); // true
+    }, schema));
 
-    // Caso fallido (falta 'nombre')
-    console.log(validarUsuario({
-        nombre: 'Juan',
-        edad: 5,
-        activo: true,
-        hello: 'mundo',
-    })); // Error: El campo "nombre" es obligatorio.
+    console.log(3, validarUsuario({
+        nombre: 'Ana',
+        edad: -5,
+    }, schema));
+
+    console.log(4, validarUsuario({
+        nombre: 'Ana',
+        edad: 30,
+        dni: '12345678',
+    }, schema));
+    // ❌ 
 
 
     return (

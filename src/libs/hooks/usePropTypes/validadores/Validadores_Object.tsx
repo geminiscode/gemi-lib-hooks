@@ -1,6 +1,5 @@
-// Validadores_Object.tsx
-import type { Type_Validadores_Response_Basic } from './Types';
-import type { Interface_Validadores } from './Validadores';
+import type { Type_Validadores, Type_Validadores_Response_Basic } from './Types';
+import { Interface_Validadores } from './Validadores';
 
 
 
@@ -10,10 +9,11 @@ import type { Interface_Validadores } from './Validadores';
 
 
 
-// Tipo para esquema de validación de objeto
-export type SchemaForObject = {
-    [key: string]: Interface_Validadores[keyof Interface_Validadores];
-};
+// Tipo para cada campo del esquema: string | number | boolean, etc.
+type Interface_Validador_Elemento = Interface_Validadores[keyof Interface_Validadores];
+
+// Esquema de validación: { clave: validador }
+type ObjectSchema = Record<string, Interface_Validador_Elemento>;
 
 
 
@@ -23,38 +23,47 @@ export type SchemaForObject = {
 
 
 
+interface Config {
+    /**
+     * Permite que el objeto tenga menos campos que los definidos en el esquema.
+     * @default false
+     */
+    allowLess?: boolean;
+
+    /**
+     * Permite que el objeto tenga más campos que los definidos en el esquema.
+     * @default false
+     */
+    allowMore?: boolean;
+}
+
 interface Interface_Validadores_Object {
     /**
-     * Valida que el valor sea un objeto válido.
+     * Valida que el valor sea un objeto y cumpla con el esquema proporcionado.
      * @param valor - Valor a validar.
-     * @returns true si es un objeto válido, sino un mensaje de error.
+     * @param esquema - Esquema de validación.
+     * @returns true si el objeto cumple con el esquema, sino un mensaje de error.
      */
-    (valor: unknown): Type_Validadores_Response_Basic;
+    (valor: unknown, esquema: ObjectSchema): Type_Validadores_Response_Basic;
 
     /**
-     * Valida que el valor no sea null ni undefined.
+     * Permite que el objeto tenga menos campos que los definidos en el esquema.
      * @returns Función de validación.
      */
-    required(): Interface_Validadores_Object;
+    allowLessFields(): Interface_Validadores_Object;
 
     /**
-     * Permite que el objeto tenga más claves que las definidas en el esquema.
+     * Permite que el objeto tenga más campos que los definidos en el esquema.
      * @returns Función de validación.
      */
-    allowExtra(): Interface_Validadores_Object;
+    allowMoreFields(): Interface_Validadores_Object;
 
     /**
-     * Permite que el objeto tenga menos claves que las definidas en el esquema.
+     * Configura el validador con opciones adicionales.
+     * @param config - Configuración adicional.
      * @returns Función de validación.
      */
-    allowLess(): Interface_Validadores_Object;
-
-    /**
-     * Valida que el objeto cumpla con un esquema específico.
-     * @param schema - Esquema de validación basado en otros validadores.
-     * @returns Función de validación.
-     */
-    scheme(schema: SchemaForObject): Interface_Validadores_Object;
+    __config(config: Config): Interface_Validadores_Object;
 }
 
 
@@ -66,7 +75,6 @@ interface Interface_Validadores_Object {
 
 
 function Build_Validadores_Object(): Interface_Validadores_Object {
-    let config = { allowExtra: false, allowLess: false };
 
 
 
@@ -75,28 +83,66 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
 
 
 
-    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+    const validar = (valor: unknown, esquema: ObjectSchema): Type_Validadores_Response_Basic => {
         if (typeof valor !== 'object' || valor === null) {
             return 'Error: El valor proporcionado no es un objeto válido.';
         }
+
+        const obj = valor as Record<string, unknown>;
+        const schemaKeys = new Set(Object.keys(esquema));
+        const objKeys = Object.keys(obj);
+
+        // Obtener configuración actual
+        const config = baseValidator.__internalConfig || {};
+
+        // Validar campos obligatorios según el esquema
+        for (const [key, validator] of Object.entries(esquema)) {
+            if (!(key in obj)) {
+                if (!config.allowLess) {
+                    return `Error: El campo "${key}" es requerido pero está faltando.`;
+                }
+            } else {
+                const result = validator(obj[key], esquema);
+                if (typeof result === 'string') {
+                    return `Error en el campo "${key}": ${result}`;
+                }
+            }
+        }
+
+        // Verificar si hay campos extras (no definidos en el esquema)
+        if (!config.allowMore) {
+            for (const key of objKeys) {
+                if (!schemaKeys.has(key)) {
+                    return `Error: El campo "${key}" no está permitido en este esquema.`;
+                }
+            }
+        }
+
         return true;
+    };
+
+    const baseValidator = validar as Interface_Validadores_Object & {
+        __internalConfig?: Config;
+    };
+
+    baseValidator.__internalConfig = {
+        allowLess: false,
+        allowMore: false,
     };
 
 
 
-    /* CHAINABLE UTILITY ------------------------------------------------------------------------*/
+    /*CHAINABLED BUILDER ------------------------------------------------------------------------*/
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
 
 
     function chainable(
-        fn: (valor: unknown) => Type_Validadores_Response_Basic
+        fn: (valor: unknown, esquema: ObjectSchema) => Type_Validadores_Response_Basic
     ): Interface_Validadores_Object {
         return Object.assign(fn, {
-            required: validar.required,
-            allowExtra: validar.allowExtra,
-            allowLess: validar.allowLess,
-            scheme: validar.scheme,
+            allowLessFields: validar.allowLessFields,
+            allowMoreFields: validar.allowMoreFields,
         }) as Interface_Validadores_Object;
     }
 
@@ -107,79 +153,32 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
 
 
 
-    validar.required = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            if (valor === null || valor === undefined) {
-                return 'Error: Este campo es requerido.';
-            }
-            return true;
-        });
+    validar.allowLessFields = () => {
+        baseValidator.__internalConfig = {
+            ...baseValidator.__internalConfig,
+            allowLess: true,
+        };
+        return baseValidator;
     };
 
-    validar.allowExtra = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            // Verificar si ya se usó allowLess
-            if (config.allowLess) {
-                throw new Error('No puedes usar .allowLess() y .allowExtra() al mismo tiempo');
-            }
-            config = { allowExtra: true, allowLess: false };
-            return true;
-        });
-    };
-
-    validar.allowLess = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            // Verificar si ya se usó allowExtra
-            if (config.allowExtra) {
-                throw new Error('No puedes usar .allowExtra() y .allowLess() al mismo tiempo');
-            }
-            config = { allowExtra: false, allowLess: true };
-            return true;
-        });
-    };
-
-    validar.scheme = (schema: SchemaForObject) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const obj = valor as Record<string, any>;
-
-            // Validar cada campo del esquema
-            for (const key in schema) {
-                const validator = schema[key];
-
-                // Si el campo no existe en los datos y no se permite faltar
-                if (!(key in obj)) {
-                    if (!config.allowLess) {
-                        return `Error: El campo "${key}" es obligatorio.`;
-                    }
-                    continue;
-                }
-
-                // Validar recursivamente si el campo es un validador
-                if (typeof validator === 'function') {
-                    const validationFn = validator as (value: unknown) => Type_Validadores_Response_Basic;
-                    const validationResult = validationFn(obj[key]);
-                    if (typeof validationResult === 'string') { return `Error: El campo "${key}" no es válido. ${validationResult}` };
-                }
-            }
-
-            // Validar si hay campos extra y no se permite
-            if (!config.allowExtra && !config.allowLess) {
-                const schemaKeys = Object.keys(schema);
-                const dataKeys = Object.keys(obj);
-                const extraKeys = dataKeys.filter((key) => !schemaKeys.includes(key));
-                if (extraKeys.length > 0) {
-                    return `Error: Los siguientes campos no son permitidos: ${extraKeys.join(', ')}`;
-                }
-            }
-
-            return true;
-        });
+    validar.allowMoreFields = () => {
+        baseValidator.__internalConfig = {
+            ...baseValidator.__internalConfig,
+            allowMore: true,
+        };
+        return baseValidator;
     };
 
 
+    validar.__config = (config: Config): Interface_Validadores_Object => {
+        baseValidator.__internalConfig = {
+            ...baseValidator.__internalConfig,
+            ...config,
+        };
+        return baseValidator;
+    };
+
+    
 
     /* RETURN -----------------------------------------------------------------------------------*/
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
@@ -197,4 +196,5 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
 
 
 
+export type { Interface_Validadores_Object };
 export const Validadores_Object = Build_Validadores_Object();

@@ -9,8 +9,14 @@
 // Definición de respuesta para los validadores
 type Type_Validadores_Response_Basic = true | string;
 
-// Definición de estructura para los validadores
-type Type_Validadores = (valor: unknown) => Type_Validadores_Response_Basic;
+// Interfaz para validar funciones que pueden recibir 1 o 2 argumentos
+interface Type_Validadores {
+    // Versión básica: solo valor
+    (valor: unknown): Type_Validadores_Response_Basic;
 
-// Export de tipos para su uso en otros y este módulos
+    // Versión extendida: valor + esquema u otro dato
+    (valor: unknown, esquema: any): Type_Validadores_Response_Basic;
+}
+
+// Export de tipos para su uso en otros módulos
 export type { Type_Validadores, Type_Validadores_Response_Basic };
