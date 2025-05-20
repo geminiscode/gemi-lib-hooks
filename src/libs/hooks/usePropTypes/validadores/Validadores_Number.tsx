@@ -1,4 +1,5 @@
 // Validadores_Number.tsx
+import { Consts_Validadores } from "./Constants";
 import { Type_Validadores_Response_Basic } from "./Types";
 
 
@@ -69,6 +70,12 @@ interface Interface_Validadores_Number {
      * @returns Función de validación.
      */
     multipleOf(divisor: number): Interface_Validadores_Number;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.number;
 }
 
 
@@ -114,6 +121,7 @@ function Build_Validadores_Number(): Interface_Validadores_Number {
             negative: validar.negative,
             integer: validar.integer,
             multipleOf: validar.multipleOf,
+            type: Consts_Validadores.types.number,
         }) as Interface_Validadores_Number;
     }
 

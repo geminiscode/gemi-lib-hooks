@@ -1,3 +1,4 @@
+import { Consts_Validadores } from './Constants';
 import type { Type_Validadores_Response_Basic } from './Types';
 
 
@@ -25,11 +26,18 @@ interface Interface_Validadores_Undefined {
      * @returns true si es `undefined`, sino un mensaje de error.
      */
     (valor: unknown): Type_Validadores_Response_Basic;
+
     /**
      * Valida que el valor **no** sea `undefined`.
      * @returns Función de validación.
      */
     required(): Interface_Validadores_Undefined;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.undefined;
 }
 
 
@@ -68,6 +76,7 @@ function Build_Validadores_Undefined(): Interface_Validadores_Undefined {
     ): Interface_Validadores_Undefined {
         return Object.assign(fn, {
             required: validar.required,
+            type: Consts_Validadores.types.undefined,
         }) as Interface_Validadores_Undefined;
     }
 

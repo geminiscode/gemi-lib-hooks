@@ -1,5 +1,6 @@
+import { Consts_Validadores } from './Constants';
 import type { Type_Validadores, Type_Validadores_Response_Basic } from './Types';
-import { Interface_Validadores } from './Validadores';
+import { getValidatorType, Interface_Validadores, Type_Validador_Elemento } from './Validadores';
 
 
 
@@ -9,11 +10,8 @@ import { Interface_Validadores } from './Validadores';
 
 
 
-// Tipo para cada campo del esquema: string | number | boolean, etc.
-type Interface_Validador_Elemento = Interface_Validadores[keyof Interface_Validadores];
-
 // Esquema de validación: { clave: validador }
-type ObjectSchema = Record<string, Interface_Validador_Elemento>;
+type ObjectSchema = Record<string, Type_Validador_Elemento>;
 
 
 
@@ -64,6 +62,12 @@ interface Interface_Validadores_Object {
      * @returns Función de validación.
      */
     __config(config: Config): Interface_Validadores_Object;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.object;
 }
 
 
@@ -102,6 +106,7 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
                     return `Error: El campo "${key}" es requerido pero está faltando.`;
                 }
             } else {
+                console.log(getValidatorType(validator));
                 const result = validator(obj[key], esquema);
                 if (typeof result === 'string') {
                     return `Error en el campo "${key}": ${result}`;

@@ -14,7 +14,7 @@ function App() {
 
     const validarUsuario = Validadores.object.allowMoreFields();
 
-    console.log(1, validarUsuario({
+    /* console.log(1, validarUsuario({
         nombre: 'Juan',
     }, schema));
 
@@ -26,7 +26,7 @@ function App() {
         nombre: 'Ana',
         edad: -5,
     }, schema));
-
+ */
     console.log(4, validarUsuario({
         nombre: 'Ana',
         edad: 30,

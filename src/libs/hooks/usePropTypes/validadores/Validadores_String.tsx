@@ -1,4 +1,5 @@
 //Validadores_String.tsx
+import { Consts_Validadores } from './Constants';
 import type { Type_Validadores_Response_Basic } from './Types';
 
 
@@ -73,7 +74,6 @@ interface Interface_Validadores_String {
      */
     alphanumeric(mensaje: string): Interface_Validadores_String;
 
-    
     /**
      * Valida que el valor sea un string y cumpla con una expresión regular.
      * @param expresion - Expresión regular a validar.
@@ -81,6 +81,12 @@ interface Interface_Validadores_String {
      * @returns Función de validación.
      */
     regex( expresion: RegExp, mensaje: string ): Interface_Validadores_String;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.string;
 }
 
 
@@ -124,6 +130,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
             onlyNumbers: validar.onlyNumbers,
             alphanumeric: validar.alphanumeric,
             regex: validar.regex,
+            type: Consts_Validadores.types.string,
         }) as Interface_Validadores_String;
     }
     

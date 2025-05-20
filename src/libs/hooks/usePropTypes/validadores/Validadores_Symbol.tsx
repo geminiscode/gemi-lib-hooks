@@ -1,3 +1,4 @@
+import { Consts_Validadores } from './Constants';
 import type { Type_Validadores_Response_Basic } from './Types';
 
 
@@ -30,6 +31,12 @@ interface Interface_Validadores_Symbol {
      * @returns Función de validación encadenable.
      */
     required(): Interface_Validadores_Symbol;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.symbol;
 }
 
 
@@ -68,6 +75,7 @@ function Build_Validadores_Symbol(): Interface_Validadores_Symbol {
     ): Interface_Validadores_Symbol {
         return Object.assign(fn, {
             required: validar.required,
+            type: Consts_Validadores.types.symbol,
         }) as Interface_Validadores_Symbol;
     }
 

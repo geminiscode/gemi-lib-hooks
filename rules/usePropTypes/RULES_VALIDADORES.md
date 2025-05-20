@@ -190,10 +190,10 @@ import { Interface_Validadores } from './Validadores';
 
 
 // Tipo para cada campo del esquema: string | number | boolean, etc.
-type Interface_Validador_Elemento = Interface_Validadores[keyof Interface_Validadores];
+type Type_Validador_Elemento = Interface_Validadores[keyof Interface_Validadores];
 
 // Esquema de validación: { clave: validador }
-type ObjectSchema = Record<string, Interface_Validador_Elemento>;
+type ObjectSchema = Record<string, Type_Validador_Elemento>;
 
 
 

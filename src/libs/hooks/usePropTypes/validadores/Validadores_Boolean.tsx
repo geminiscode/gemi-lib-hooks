@@ -1,4 +1,5 @@
 // Validadores_Boolean.tsx
+import { Consts_Validadores } from './Constants';
 import type { Type_Validadores_Response_Basic } from './Types';
 
 
@@ -41,6 +42,12 @@ interface Interface_Validadores_Boolean {
      * @returns Función de validación.
      */
     custom(fn: (value: boolean) => Type_Validadores_Response_Basic): Interface_Validadores_Boolean;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.boolean;
 }
 
 
@@ -82,6 +89,7 @@ function Build_Validadores_Boolean(): Interface_Validadores_Boolean {
             true: validar.true,
             false: validar.false,
             custom: validar.custom,
+            type: Consts_Validadores.types.boolean,
         }) as Interface_Validadores_Boolean;
     }
 

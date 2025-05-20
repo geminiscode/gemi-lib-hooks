@@ -1,3 +1,4 @@
+import { Consts_Validadores } from './Constants';
 import type { Type_Validadores_Response_Basic } from './Types';
 
 
@@ -19,17 +20,25 @@ import type { Type_Validadores_Response_Basic } from './Types';
 
 
 interface Interface_Validadores_Null {
+
     /**
      * Valida que el valor sea exactamente `null`.
      * @param valor - Valor a validar.
      * @returns true si es null, sino un mensaje de error.
      */
     (valor: unknown): Type_Validadores_Response_Basic;
+
     /**
      * Valida que el valor **no** sea `null`.
      * @returns Función de validación encadenable.
      */
     required(): Interface_Validadores_Null;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.null;
 }
 
 
@@ -68,6 +77,7 @@ function Build_Validadores_Null(): Interface_Validadores_Null {
     ): Interface_Validadores_Null {
         return Object.assign(fn, {
             required: validar.required,
+            type: Consts_Validadores.types.null,
         }) as Interface_Validadores_Null;
     }
 
