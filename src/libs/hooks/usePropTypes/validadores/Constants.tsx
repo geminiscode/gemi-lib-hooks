@@ -16,6 +16,7 @@ const Consts_Validadores = {
     undefined: "undefined",
     null: "null",
     symbol: "symbol",
+    array: "array",
     object: "object",
   },
 } as const;

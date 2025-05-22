@@ -1,10 +1,10 @@
 // Validadores.tsx
 import { Consts_Validadores } from "./Constants";
+import { Validadores_Array } from "./Validadores_Array";
 import { Validadores_BigInt } from "./Validadores_BigInt";
 import { Validadores_Boolean } from "./Validadores_Boolean";
 import { Validadores_Null } from "./Validadores_Null";
 import { Validadores_Number } from "./Validadores_Number";
-import { Validadores_Object } from "./Validadores_Object";
 import { Validadores_String } from "./Validadores_String";
 import { Validadores_Symbol } from "./Validadores_Symbol";
 import { Validadores_Undefined } from "./Validadores_Undefined";
@@ -39,7 +39,7 @@ interface Interface_Validadores {
     undefined: typeof Validadores_Undefined & { type: typeof Consts_Validadores.types.undefined };
     null: typeof Validadores_Null & { type: typeof Consts_Validadores.types.null };
     symbol: typeof Validadores_Symbol & { type: typeof Consts_Validadores.types.symbol };
-    object: typeof Validadores_Object & { type: typeof Consts_Validadores.types.object };
+    array: typeof Validadores_Array & { type: typeof Consts_Validadores.types.array };
 }
 
 
@@ -58,7 +58,7 @@ const Validadores: Interface_Validadores = {
     undefined: Validadores_Undefined,
     null: Validadores_Null,
     symbol: Validadores_Symbol,
-    object: Validadores_Object,
+    array: Validadores_Array,
 };
 
 

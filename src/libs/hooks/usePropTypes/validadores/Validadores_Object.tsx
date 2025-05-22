@@ -1,5 +1,5 @@
 import { Consts_Validadores } from './Constants';
-import type { Type_Validadores, Type_Validadores_Response_Basic } from './Types';
+import type { Type_Validadores_Response_Basic } from './Types';
 import { getValidatorType, Interface_Validadores, Type_Validador_Elemento } from './Validadores';
 
 
@@ -68,6 +68,12 @@ interface Interface_Validadores_Object {
      * @returns El tipo de validador.
      */
     type: typeof Consts_Validadores.types.object;
+
+    /**
+     * Esquema interno del validador.
+     * @returns El esquema interno del validador.
+     */
+    __internalSchema?: ObjectSchema;
 }
 
 
@@ -78,7 +84,7 @@ interface Interface_Validadores_Object {
 
 
 
-function Build_Validadores_Object(): Interface_Validadores_Object {
+function Build_Validadores_Object(esquema: any): Interface_Validadores_Object {
 
 
 
@@ -87,34 +93,45 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
 
 
 
-    const validar = (valor: unknown, esquema: ObjectSchema): Type_Validadores_Response_Basic => {
+    const validar = (valor: unknown, schema: ObjectSchema): Type_Validadores_Response_Basic => {
         if (typeof valor !== 'object' || valor === null) {
             return 'Error: El valor proporcionado no es un objeto válido.';
         }
 
         const obj = valor as Record<string, unknown>;
-        const schemaKeys = new Set(Object.keys(esquema));
+        const schemaKeys = new Set(Object.keys(schema));
         const objKeys = Object.keys(obj);
 
-        // Obtener configuración actual
         const config = baseValidator.__internalConfig || {};
 
-        // Validar campos obligatorios según el esquema
-        for (const [key, validator] of Object.entries(esquema)) {
+        for (const [key, validator] of Object.entries(schema)) {
             if (!(key in obj)) {
                 if (!config.allowLess) {
                     return `Error: El campo "${key}" es requerido pero está faltando.`;
                 }
             } else {
-                console.log(getValidatorType(validator));
-                const result = validator(obj[key], esquema);
-                if (typeof result === 'string') {
-                    return `Error en el campo "${key}": ${result}`;
+                const valorCampo = obj[key];
+                const tipoValidador = getValidatorType(validator);
+
+                if (tipoValidador === Consts_Validadores.types.object && typeof validator === 'function') {
+                    const nestedSchema = (validator as any).__internalSchema;
+                    if (nestedSchema) {
+                        const result = validator(valorCampo);
+                        if (typeof result === 'string') {
+                            return `Error en el campo "${key}": ${result}`;
+                        }
+                    } else {
+                        return `Error en el campo "${key}": Se esperaba un esquema para el objeto anidado.`;
+                    }
+                } else {
+                    const result = validator(valorCampo);
+                    if (typeof result === 'string') {
+                        return `Error en el campo "${key}": ${result}`;
+                    }
                 }
             }
         }
 
-        // Verificar si hay campos extras (no definidos en el esquema)
         if (!config.allowMore) {
             for (const key of objKeys) {
                 if (!schemaKeys.has(key)) {
@@ -143,11 +160,14 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
 
 
     function chainable(
-        fn: (valor: unknown, esquema: ObjectSchema) => Type_Validadores_Response_Basic
+        fn: (valor: unknown, esquema: ObjectSchema) => Type_Validadores_Response_Basic,
+        schema: ObjectSchema
     ): Interface_Validadores_Object {
         return Object.assign(fn, {
             allowLessFields: validar.allowLessFields,
             allowMoreFields: validar.allowMoreFields,
+            type: Consts_Validadores.types.object,
+            __internalSchema: schema,
         }) as Interface_Validadores_Object;
     }
 
@@ -159,29 +179,43 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
 
 
     validar.allowLessFields = () => {
-        baseValidator.__internalConfig = {
+        const newConfig = {
             ...baseValidator.__internalConfig,
             allowLess: true,
         };
-        return baseValidator;
+        const fn = (valor: unknown, schema: ObjectSchema) => {
+            baseValidator.__internalConfig = newConfig;
+            return validar(valor, schema);
+        };
+        return chainable(fn, esquema);
     };
 
     validar.allowMoreFields = () => {
-        baseValidator.__internalConfig = {
+        const newConfig = {
             ...baseValidator.__internalConfig,
             allowMore: true,
         };
-        return baseValidator;
+        const fn = (valor: unknown, schema: ObjectSchema) => {
+            baseValidator.__internalConfig = newConfig;
+            return validar(valor, schema);
+        };
+        return chainable(fn, esquema);
     };
 
-
     validar.__config = (config: Config): Interface_Validadores_Object => {
-        baseValidator.__internalConfig = {
+        const newConfig = {
             ...baseValidator.__internalConfig,
             ...config,
         };
-        return baseValidator;
+        const fn = (valor: unknown, schema: ObjectSchema) => {
+            baseValidator.__internalConfig = newConfig;
+            return validar(valor, schema);
+        };
+        return chainable(fn, esquema);
     };
+
+
+    (baseValidator as Interface_Validadores_Object & { __internalSchema: ObjectSchema }).__internalSchema = esquema;
 
     
 
@@ -190,7 +224,7 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
 
 
 
-    return validar as Interface_Validadores_Object;
+    return baseValidator as Interface_Validadores_Object;
 }
 
 
@@ -202,4 +236,4 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
 
 
 export type { Interface_Validadores_Object };
-export const Validadores_Object = Build_Validadores_Object();
+export const Validadores_Object = Build_Validadores_Object;

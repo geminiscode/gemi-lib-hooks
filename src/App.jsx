@@ -7,6 +7,18 @@ import { Validadores } from './libs/index'
 function App() {
     const [count, setCount] = useState(0)
 
+const validarStringOrNumberArray = Validadores.array
+    .of([Validadores.string, Validadores.number])
+    .minLength(1, 'Mínimo 2 elementos')
+
+console.log(validarStringOrNumberArray(['hola'])); // true
+console.log(validarStringOrNumberArray(['hola'])); // "Mínimo 2 elementos"
+console.log(validarStringOrNumberArray(['hola', 123, true])); // "Elemento en posición [2] no es de un tipo válido."
+
+
+
+/* 
+
     const schema = {
         nombre: Validadores.string.required('Nombre obligatorio'),
         edad: Validadores.number.min(-10, 'La edad no puede ser negativa'),
@@ -14,7 +26,7 @@ function App() {
 
     const validarUsuario = Validadores.object.allowMoreFields();
 
-    /* console.log(1, validarUsuario({
+    console.log(1, validarUsuario({
         nombre: 'Juan',
     }, schema));
 
@@ -26,15 +38,16 @@ function App() {
         nombre: 'Ana',
         edad: -5,
     }, schema));
- */
+
     console.log(4, validarUsuario({
         nombre: 'Ana',
         edad: 30,
         dni: '12345678',
     }, schema));
-    // ❌ 
 
+ */
     
+
 
     return (
         <>
