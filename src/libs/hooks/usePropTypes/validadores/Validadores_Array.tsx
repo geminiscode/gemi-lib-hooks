@@ -1,32 +1,24 @@
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* TYPES ---------------------------------------------------------------------------------------*/
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-import { Consts_Validadores } from "./Constants";
-import type {
-    Type_Validadores_Response_Basic,
-    Type_Validadores,
-} from "./Types";
+import type { Type_Validadores_Response_Basic, Type_Validadores } from "./Types";
 import type { Interface_Validadores } from "./Validadores";
+import { Consts_Validadores } from "./Constants";
 
-/**
- * Tipo para un validador individual de elementos dentro del array.
- */
-type ElementValidator = (valor: unknown) => Type_Validadores_Response_Basic;
 
-/**
- * Esquema para validar contenido de arrays:
- * Se define un conjunto de tipos/validadores permitidos para cualquier elemento del array.
- */
-type ArraySchema = {
-    /**
-     * Tipos/validadores permitidos para cualquier elemento del array.
-     */
-    of: Interface_Validadores[keyof Interface_Validadores][];
-};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* INTERFACES ----------------------------------------------------------------------------------*/
+/* TYPES ----------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+// -- no apply
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
 
 interface Config {
     /**
@@ -100,12 +92,23 @@ interface Interface_Validadores_Array {
     type: typeof Consts_Validadores.types.array;
 }
 
+
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* BUILDER -------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
+
+
 function Build_Validadores_Array(): Interface_Validadores_Array {
+
+
+
     /* MAIN --------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
     const validar = (valor: unknown): Type_Validadores_Response_Basic => {
         if (!Array.isArray(valor)) {
             return "Error: El valor proporcionado no es un array.";
@@ -170,7 +173,13 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
         of: undefined,
     };
 
+
+
     /* CHAINABLE UTILITY -------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
     function chainable(fn: Type_Validadores): Interface_Validadores_Array {
         return Object.assign(fn, {
             optionalEmpty: validar.optionalEmpty,
@@ -182,7 +191,13 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
         }) as Interface_Validadores_Array;
     }
 
+
+
     /* CHAINED METHODS ---------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
     validar.optionalEmpty = () => {
         baseValidator.__internalConfig = {
             ...baseValidator.__internalConfig,
@@ -225,9 +240,16 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
         return chainable(validar);
     };
 
+
+
     /* RETURN ------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
     return validar as Interface_Validadores_Array;
 }
+
+
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* EXPORT ---------------------------------------------------------------------------------------*/
