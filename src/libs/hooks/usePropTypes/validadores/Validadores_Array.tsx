@@ -1,5 +1,5 @@
 import type { Type_Validadores_Response_Basic, Type_Validadores } from "./Types";
-import type { Interface_Validadores } from "./Validadores";
+import { getValidatorType, type Interface_Validadores } from "./Validadores";
 import { Consts_Validadores } from "./Constants";
 
 
@@ -11,6 +11,23 @@ import { Consts_Validadores } from "./Constants";
 
 
 // -- no apply
+
+// --- Tipos sin importar directamente de Validadores ---
+type Type_Validador_Elemento = any; // Será definido mediante inyección
+type Type_Validador_Elemento_Response = string | undefined;
+
+let _Validadores: {
+  getValidatorType: (validator: any) => string | undefined;
+} | null = null;
+
+/**
+ * Función pública para inyectar una referencia a Validadores.
+ */
+export const setValidatorReference = (
+  validators: typeof _Validadores
+): void => {
+  _Validadores = validators;
+};
 
 
 
@@ -143,18 +160,48 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
             for (let i = 0; i < length; i++) {
                 const element = valor[i];
                 let isValid = false;
+                let firstError: string | null = null;
 
-                for (const validator of config.of) {
-                    const result = validator(element);
-                    if (result === true) {
-                        isValid = true;
-                        break;
+                // Obtener el tipo nativo del valor (string, number, boolean, etc.)
+                const elementType = typeof element;
+
+                // Filtrar solo los validadores que corresponden al tipo del valor
+                const matchingValidators = config.of.filter((validator) => {
+                    const validatorType = getValidatorType(validator);
+                    return validatorType === elementType;
+                });
+
+                // Si hay validadores que coinciden con el tipo, usarlos
+                if (matchingValidators.length > 0) {
+                    for (const validator of matchingValidators) {
+                        const result = validator(element);
+
+                        if (result === true) {
+                            isValid = true;
+                            break;
+                        } else if (!firstError) {
+                            firstError = result;
+                        }
                     }
+                } else {
+                    // Si ningún validador corresponde al tipo del valor
+                    const allowedTypes = config.of
+                        .map((v) => getValidatorType(v) || 'desconocido')
+                        .join(', ');
+
+                    return `Error en posición [${i}]: Tipo "${elementType}" no permitido. Se esperaba: ${allowedTypes}. Valor recibido: ${element}`;
+                }
+
+                if (!isValid && firstError) {
+                    return `Error en posición [${i}]: ${firstError}`;
                 }
 
                 if (!isValid) {
-                    const allowedTypes = config.of.map((v) => v.name || "tipo desconocido").join(", ");
-                    return `Error en posición [${i}]: El valor no es de ninguno de los tipos permitidos: ${allowedTypes}`;
+                    const allowedTypes = config.of
+                        .map((v) => getValidatorType(v) || 'desconocido')
+                        .join(', ');
+
+                    return `Error en posición [${i}]: El valor no coincide con ninguno de los tipos permitidos: ${allowedTypes}`;
                 }
             }
         }

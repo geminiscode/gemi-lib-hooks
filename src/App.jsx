@@ -7,13 +7,11 @@ import { Validadores } from './libs/index'
 function App() {
     const [count, setCount] = useState(0)
 
-const validarStringOrNumberArray = Validadores.array
-    .of([Validadores.string, Validadores.number])
-    .minLength(1, 'Mínimo 2 elementos')
+    const validarStringOrNumberArray = Validadores.array
+        .of([Validadores.string.max(4), Validadores.number.min(100)])
+        .minLength(2, 'Mínimo 3 elementos')
 
-console.log(validarStringOrNumberArray(['hola'])); // true
-console.log(validarStringOrNumberArray(['hola'])); // "Mínimo 2 elementos"
-console.log(validarStringOrNumberArray(['hola', 123, true])); // "Elemento en posición [2] no es de un tipo válido."
+    console.log(validarStringOrNumberArray(['hola', 1230, 100, 900])); // "Elemento en posición [2] no es de un tipo válido."
 
 
 
