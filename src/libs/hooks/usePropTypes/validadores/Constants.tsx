@@ -18,6 +18,7 @@ const Consts_Validadores = {
     symbol: "symbol",
     array: "array",
     object: "object",
+    instanceof: "instanceof",
   },
 } as const;
 

@@ -8,11 +8,22 @@ function App() {
     const [count, setCount] = useState(0)
 
     const validarStringOrNumberArray = Validadores.array
-        .of([Validadores.string.max(4), Validadores.number.min(100)])
+        .of([Validadores.string.max(40), Validadores.number.min(100)])
         .minLength(2, 'Mínimo 3 elementos')
 
-    console.log(validarStringOrNumberArray(['hola', 1230, 100, 900])); // "Elemento en posición [2] no es de un tipo válido."
+    console.log(validarStringOrNumberArray(['hola', 1230, 100, 900, "si se puede"])); // "Elemento en posición [2] no es de un tipo válido."
 
+    console.log(Validadores.instanceof(Date)(new Date())); 
+// true
+
+console.log(Validadores.instanceof(String)("hola")); 
+// Error: El valor debe ser una instancia de String...
+
+console.log(Validadores.instanceof.not(Number)(123)); 
+// true
+
+console.log(Validadores.instanceof.not(String)(new Date()));
+// Error: El valor NO debe ser una instancia de Date.
 
 
 /* 

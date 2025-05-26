@@ -3,6 +3,7 @@ import { Consts_Validadores } from "./Constants";
 import { Validadores_Array } from "./Validadores_Array";
 import { Validadores_BigInt } from "./Validadores_BigInt";
 import { Validadores_Boolean } from "./Validadores_Boolean";
+import { Validadores_InstanceOf } from "./Validadores_InstanceOf";
 import { Validadores_Null } from "./Validadores_Null";
 import { Validadores_Number } from "./Validadores_Number";
 import { Validadores_String } from "./Validadores_String";
@@ -40,6 +41,7 @@ interface Interface_Validadores {
     null: typeof Validadores_Null & { type: typeof Consts_Validadores.types.null };
     symbol: typeof Validadores_Symbol & { type: typeof Consts_Validadores.types.symbol };
     array: typeof Validadores_Array & { type: typeof Consts_Validadores.types.array };
+    instanceof: typeof Validadores_InstanceOf & { type: typeof Consts_Validadores.types.instanceof };
 }
 
 
@@ -59,6 +61,7 @@ const Validadores: Interface_Validadores = {
     null: Validadores_Null,
     symbol: Validadores_Symbol,
     array: Validadores_Array,
+    instanceof: Validadores_InstanceOf,
 };
 
 

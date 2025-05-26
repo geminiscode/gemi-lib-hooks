@@ -12,23 +12,6 @@ import { Consts_Validadores } from "./Constants";
 
 // -- no apply
 
-// --- Tipos sin importar directamente de Validadores ---
-type Type_Validador_Elemento = any; // Será definido mediante inyección
-type Type_Validador_Elemento_Response = string | undefined;
-
-let _Validadores: {
-  getValidatorType: (validator: any) => string | undefined;
-} | null = null;
-
-/**
- * Función pública para inyectar una referencia a Validadores.
- */
-export const setValidatorReference = (
-  validators: typeof _Validadores
-): void => {
-  _Validadores = validators;
-};
-
 
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -112,7 +95,7 @@ interface Interface_Validadores_Array {
 
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* BUILDER -------------------------------------------------------------------------------------*/
+/* BUILDER --------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 
@@ -121,7 +104,7 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
 
 
 
-    /* MAIN --------------------------------------------------------------------------------------*/
+    /* MAIN -------------------------------------------------------------------------------------*/
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
 
@@ -179,7 +162,7 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
                         if (result === true) {
                             isValid = true;
                             break;
-                        } else if (!firstError) {
+                        } else if (!firstError && typeof result === "string") {
                             firstError = result;
                         }
                     }
@@ -222,7 +205,7 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
 
 
 
-    /* CHAINABLE UTILITY -------------------------------------------------------------------------*/
+    /* CHAINABLE UTILITY ------------------------------------------------------------------------*/
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
 
@@ -233,14 +216,14 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
             minLength: validar.minLength,
             maxLength: validar.maxLength,
             of: validar.of,
-            __config: validar.__config,
             type: Consts_Validadores.types.array,
+            __config: validar.__config,
         }) as Interface_Validadores_Array;
     }
 
 
 
-    /* CHAINED METHODS ---------------------------------------------------------------------------*/
+    /* CHAINED METHODS --------------------------------------------------------------------------*/
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
 
@@ -292,6 +275,7 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
     /* RETURN ------------------------------------------------------------------------------------*/
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
+    
 
     return validar as Interface_Validadores_Array;
 }
