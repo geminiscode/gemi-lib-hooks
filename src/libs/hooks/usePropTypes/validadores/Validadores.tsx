@@ -6,6 +6,7 @@ import { Validadores_Boolean } from "./Validadores_Boolean";
 import { Validadores_InstanceOf } from "./Validadores_InstanceOf";
 import { Validadores_Null } from "./Validadores_Null";
 import { Validadores_Number } from "./Validadores_Number";
+import { Validadores_Object } from "./Validadores_Object";
 import { Validadores_String } from "./Validadores_String";
 import { Validadores_Symbol } from "./Validadores_Symbol";
 import { Validadores_Undefined } from "./Validadores_Undefined";
@@ -42,6 +43,7 @@ interface Interface_Validadores {
     symbol: typeof Validadores_Symbol & { type: typeof Consts_Validadores.types.symbol };
     array: typeof Validadores_Array & { type: typeof Consts_Validadores.types.array };
     instanceof: typeof Validadores_InstanceOf & { type: typeof Consts_Validadores.types.instanceof };
+    object: typeof Validadores_Object & { type: typeof Consts_Validadores.types.object };
 }
 
 
@@ -62,6 +64,7 @@ const Validadores: Interface_Validadores = {
     symbol: Validadores_Symbol,
     array: Validadores_Array,
     instanceof: Validadores_InstanceOf,
+    object: Validadores_Object,
 };
 
 

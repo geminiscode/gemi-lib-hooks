@@ -157,13 +157,15 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
                 // Si hay validadores que coinciden con el tipo, usarlos
                 if (matchingValidators.length > 0) {
                     for (const validator of matchingValidators) {
-                        const result = validator(element);
+                        if (typeof validator === "function") {
+                            const result = validator(element);
 
-                        if (result === true) {
-                            isValid = true;
-                            break;
-                        } else if (!firstError && typeof result === "string") {
-                            firstError = result;
+                            if (result === true) {
+                                isValid = true;
+                                break;
+                            } else if (!firstError && typeof result === "string") {
+                                firstError = result;
+                            }
                         }
                     }
                 } else {

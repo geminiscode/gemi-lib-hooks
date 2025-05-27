@@ -7,55 +7,28 @@ import { Validadores } from './libs/index'
 function App() {
     const [count, setCount] = useState(0)
 
-    const validarStringOrNumberArray = Validadores.array
-        .of([Validadores.string.max(40), Validadores.number.min(100)])
-        .minLength(2, 'Mínimo 3 elementos')
-
-    console.log(validarStringOrNumberArray(['hola', 1230, 100, 900, "si se puede"])); // "Elemento en posición [2] no es de un tipo válido."
-
-    console.log(Validadores.instanceof(Date)(new Date())); 
-// true
-
-console.log(Validadores.instanceof(String)("hola")); 
-// Error: El valor debe ser una instancia de String...
-
-console.log(Validadores.instanceof.not(Number)(123)); 
-// true
-
-console.log(Validadores.instanceof.not(String)(new Date()));
-// Error: El valor NO debe ser una instancia de Date.
 
 
-/* 
+    const schema = Validadores.object.shape({
+        id: Validadores.number.required(),
+        name: Validadores.string.min(3, 'Muy corto').required(),
+        address: Validadores.object.shape({
+            street: Validadores.string,
+            zip: Validadores.number.min(1000, 'Código postal inválido'),
+        }).required(),
+    });
 
-    const schema = {
-        nombre: Validadores.string.required('Nombre obligatorio'),
-        edad: Validadores.number.min(-10, 'La edad no puede ser negativa'),
+    const valor = {
+        id: 123,
+        name: 'Ju',
+        address: {
+            street: "hola como estas",
+            zip: 12345,
+        },
     };
 
-    const validarUsuario = Validadores.object.allowMoreFields();
+    console.log(schema(valor)); // true
 
-    console.log(1, validarUsuario({
-        nombre: 'Juan',
-    }, schema));
-
-    console.log(2, validarUsuario({
-        edad: 25,
-    }, schema));
-
-    console.log(3, validarUsuario({
-        nombre: 'Ana',
-        edad: -5,
-    }, schema));
-
-    console.log(4, validarUsuario({
-        nombre: 'Ana',
-        edad: 30,
-        dni: '12345678',
-    }, schema));
-
- */
-    
 
 
     return (

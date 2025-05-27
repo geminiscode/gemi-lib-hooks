@@ -1,239 +1,156 @@
+// Validadores_Object.tsx
 import { Consts_Validadores } from './Constants';
 import type { Type_Validadores_Response_Basic } from './Types';
-import { getValidatorType, Interface_Validadores, Type_Validador_Elemento } from './Validadores';
-
-
+import { getValidatorType, Interface_Validadores } from './Validadores';
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TYPES ----------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
+interface Interface_Config_Object_Property {
+    validator: (value: unknown) => Type_Validadores_Response_Basic;
+    isRequired: boolean;
+}
 
-
-// Esquema de validación: { clave: validador }
-type ObjectSchema = Record<string, Type_Validador_Elemento>;
-
-
+interface Interface_Config_Object {
+    properties?: Record<string, Interface_Config_Object_Property>;
+    optional?: boolean;
+    allowUnknown?: boolean;
+    required?: boolean;
+}
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* INTERFACES -----------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
+interface Interface_Validadores_Object_Chain {
+    (valor: unknown): Type_Validadores_Response_Basic;
 
+    shape(
+        schema: Record<string, Interface_Validadores[keyof Interface_Validadores]>
+    ): Interface_Validadores_Object_Chain;
 
-interface Config {
-    /**
-     * Permite que el objeto tenga menos campos que los definidos en el esquema.
-     * @default false
-     */
-    allowLess?: boolean;
+    allowUnknown(): Interface_Validadores_Object_Chain;
+    required(): Interface_Validadores_Object_Chain;
+    optional(): Interface_Validadores_Object_Chain;
 
-    /**
-     * Permite que el objeto tenga más campos que los definidos en el esquema.
-     * @default false
-     */
-    allowMore?: boolean;
-}
-
-interface Interface_Validadores_Object {
-    /**
-     * Valida que el valor sea un objeto y cumpla con el esquema proporcionado.
-     * @param valor - Valor a validar.
-     * @param esquema - Esquema de validación.
-     * @returns true si el objeto cumple con el esquema, sino un mensaje de error.
-     */
-    (valor: unknown, esquema: ObjectSchema): Type_Validadores_Response_Basic;
-
-    /**
-     * Permite que el objeto tenga menos campos que los definidos en el esquema.
-     * @returns Función de validación.
-     */
-    allowLessFields(): Interface_Validadores_Object;
-
-    /**
-     * Permite que el objeto tenga más campos que los definidos en el esquema.
-     * @returns Función de validación.
-     */
-    allowMoreFields(): Interface_Validadores_Object;
-
-    /**
-     * Configura el validador con opciones adicionales.
-     * @param config - Configuración adicional.
-     * @returns Función de validación.
-     */
-    __config(config: Config): Interface_Validadores_Object;
-
-    /**
-     * Tipo de validador.
-     * @returns El tipo de validador.
-     */
     type: typeof Consts_Validadores.types.object;
-
-    /**
-     * Esquema interno del validador.
-     * @returns El esquema interno del validador.
-     */
-    __internalSchema?: ObjectSchema;
 }
-
-
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* BUILDER --------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
+function Build_Validadores_Object(): Interface_Validadores_Object_Chain {
+    let config: Interface_Config_Object = {
+        properties: {},
+        optional: false,
+        allowUnknown: false,
+    };
 
-
-function Build_Validadores_Object(esquema: any): Interface_Validadores_Object {
-
-
-
-    /* MAIN -------------------------------------------------------------------------------------*/
-    /*///////////////////////////////////////////////////////////////////////////////////////////*/
-
-
-
-    const validar = (valor: unknown, schema: ObjectSchema): Type_Validadores_Response_Basic => {
-        if (typeof valor !== 'object' || valor === null) {
-            return 'Error: El valor proporcionado no es un objeto válido.';
+    const validar = ((valor: unknown): Type_Validadores_Response_Basic => {
+        if (config.optional && valor === undefined) return true;
+        if (config.required && (valor === undefined || valor === null)) {
+            return 'Error: Este campo es requerido.';
+        }
+        if (typeof valor !== 'object' || Array.isArray(valor) || valor === null) {
+            return 'Error: El valor debe ser un objeto.';
         }
 
         const obj = valor as Record<string, unknown>;
-        const schemaKeys = new Set(Object.keys(schema));
-        const objKeys = Object.keys(obj);
 
-        const config = baseValidator.__internalConfig || {};
+        // Validar propiedades definidas
+        for (const key in config.properties) {
+            const propConfig = config.properties[key];
+            const value = obj[key];
 
-        for (const [key, validator] of Object.entries(schema)) {
-            if (!(key in obj)) {
-                if (!config.allowLess) {
-                    return `Error: El campo "${key}" es requerido pero está faltando.`;
-                }
-            } else {
-                const valorCampo = obj[key];
-                const tipoValidador = getValidatorType(validator);
+            const result = propConfig.validator(value);
 
-                if (tipoValidador === Consts_Validadores.types.object && typeof validator === 'function') {
-                    const nestedSchema = (validator as any).__internalSchema;
-                    if (nestedSchema) {
-                        const result = validator(valorCampo);
-                        if (typeof result === 'string') {
-                            return `Error en el campo "${key}": ${result}`;
-                        }
-                    } else {
-                        return `Error en el campo "${key}": Se esperaba un esquema para el objeto anidado.`;
-                    }
-                } else {
-                    const result = validator(valorCampo);
-                    if (typeof result === 'string') {
-                        return `Error en el campo "${key}": ${result}`;
-                    }
-                }
+            if (typeof result === 'string') {
+                return `Error en propiedad "${key}": ${result}`;
             }
         }
 
-        if (!config.allowMore) {
-            for (const key of objKeys) {
-                if (!schemaKeys.has(key)) {
-                    return `Error: El campo "${key}" no está permitido en este esquema.`;
+        // Validar propiedades desconocidas
+        if (!config.allowUnknown) {
+            for (const key in obj) {
+                if (!(key in (config.properties || {}))) {
+                    return `Error: La propiedad "${key}" no está permitida en este objeto.`;
                 }
             }
         }
 
         return true;
-    };
+    }) as Interface_Validadores_Object_Chain;
 
-    const baseValidator = validar as Interface_Validadores_Object & {
-        __internalConfig?: Config;
-    };
+    validar.type = Consts_Validadores.types.object;
 
-    baseValidator.__internalConfig = {
-        allowLess: false,
-        allowMore: false,
-    };
-
-
-
-    /*CHAINABLED BUILDER ------------------------------------------------------------------------*/
-    /*///////////////////////////////////////////////////////////////////////////////////////////*/
-
-
-
-    function chainable(
-        fn: (valor: unknown, esquema: ObjectSchema) => Type_Validadores_Response_Basic,
-        schema: ObjectSchema
-    ): Interface_Validadores_Object {
+    function chainable(fn: (valor: unknown) => Type_Validadores_Response_Basic): Interface_Validadores_Object_Chain {
         return Object.assign(fn, {
-            allowLessFields: validar.allowLessFields,
-            allowMoreFields: validar.allowMoreFields,
+            shape: validar.shape,
+            allowUnknown: validar.allowUnknown,
+            required: validar.required,
+            optional: validar.optional,
             type: Consts_Validadores.types.object,
-            __internalSchema: schema,
-        }) as Interface_Validadores_Object;
+        }) as Interface_Validadores_Object_Chain;
     }
 
+    validar.shape = (schema) => {
+        const newProperties: Record<string, Interface_Config_Object_Property> = {};
 
+        for (const key in schema) {
+            const validator = schema[key];
+            const isRequired = getValidatorType(validator) !== 'undefined';
 
-    /* CHAINED METHODS --------------------------------------------------------------------------*/
-    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+            newProperties[key] = {
+                validator: validator as (value: unknown) => Type_Validadores_Response_Basic,
+                isRequired,
+            };
+        }
 
-
-
-    validar.allowLessFields = () => {
-        const newConfig = {
-            ...baseValidator.__internalConfig,
-            allowLess: true,
-        };
-        const fn = (valor: unknown, schema: ObjectSchema) => {
-            baseValidator.__internalConfig = newConfig;
-            return validar(valor, schema);
-        };
-        return chainable(fn, esquema);
-    };
-
-    validar.allowMoreFields = () => {
-        const newConfig = {
-            ...baseValidator.__internalConfig,
-            allowMore: true,
-        };
-        const fn = (valor: unknown, schema: ObjectSchema) => {
-            baseValidator.__internalConfig = newConfig;
-            return validar(valor, schema);
-        };
-        return chainable(fn, esquema);
-    };
-
-    validar.__config = (config: Config): Interface_Validadores_Object => {
-        const newConfig = {
-            ...baseValidator.__internalConfig,
+        config = {
             ...config,
+            properties: {
+                ...(config.properties || {}),
+                ...newProperties,
+            },
         };
-        const fn = (valor: unknown, schema: ObjectSchema) => {
-            baseValidator.__internalConfig = newConfig;
-            return validar(valor, schema);
-        };
-        return chainable(fn, esquema);
+
+        return chainable(validar);
     };
 
+    validar.allowUnknown = () => {
+        config = {
+            ...config,
+            allowUnknown: true,
+        };
+        return chainable(validar);
+    };
 
-    (baseValidator as Interface_Validadores_Object & { __internalSchema: ObjectSchema }).__internalSchema = esquema;
+    validar.required = () => {
+        config = {
+            ...config,
+            required: true,
+            optional: false,
+        };
+        return chainable(validar);
+    };
 
-    
+    validar.optional = () => {
+        config = {
+            ...config,
+            optional: true,
+            required: false,
+        };
+        return chainable(validar);
+    };
 
-    /* RETURN -----------------------------------------------------------------------------------*/
-    /*///////////////////////////////////////////////////////////////////////////////////////////*/
-
-
-
-    return baseValidator as Interface_Validadores_Object;
+    return chainable(validar);
 }
-
-
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* EXPORT ---------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-
-
-export type { Interface_Validadores_Object };
-export const Validadores_Object = Build_Validadores_Object;
+export type { Interface_Validadores_Object_Chain };
+export const Validadores_Object = Build_Validadores_Object();
