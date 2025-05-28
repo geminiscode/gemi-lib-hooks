@@ -120,16 +120,122 @@ function Build_Validadores_String(): Interface_Validadores_String {
 
 
 
-    function chainable( fn: (valor: unknown) => Type_Validadores_Response_Basic ): Interface_Validadores_String {
-        return Object.assign(fn, {
-            required: validar.required,
-            min: validar.min,
-            max: validar.max,
-            exact: validar.exact,
-            onlyLetters: validar.onlyLetters,
-            onlyNumbers: validar.onlyNumbers,
-            alphanumeric: validar.alphanumeric,
-            regex: validar.regex,
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_String {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea un string
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (!valor || (typeof valor === 'string' && valor.trim() === '')) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
+            min: (longitud: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (str.length < longitud) {
+                        return mensaje || `Error: Debe tener al menos ${longitud} caracteres.`;
+                    }
+
+                    return true;
+                }),
+
+            max: (longitud: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (str.length > longitud) {
+                        return mensaje || `Error: No puede superar los ${longitud} caracteres.`;
+                    }
+
+                    return true;
+                }),
+
+            exact: (longitud: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (str.length !== longitud) {
+                        return mensaje || `Error: Debe tener exactamente ${longitud} caracteres.`;
+                    }
+
+                    return true;
+                }),
+
+            onlyLetters: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (!/^[a-zA-Z]+$/.test(str)) {
+                        return mensaje || 'Error: Solo se permiten letras.';
+                    }
+
+                    return true;
+                }),
+
+            onlyNumbers: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (!/^[0-9]+$/.test(str)) {
+                        return mensaje || 'Error: Solo se permiten números.';
+                    }
+
+                    return true;
+                }),
+
+            alphanumeric: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (!/^[a-zA-Z0-9]+$/.test(str)) {
+                        return mensaje || 'Error: Solo se permiten letras y números.';
+                    }
+
+                    return true;
+                }),
+
+            regex: (expresion: RegExp, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (!expresion.test(str)) {
+                        return mensaje || 'Error: El valor no coincide con el patrón requerido.';
+                    }
+
+                    return true;
+                }),
+
             type: Consts_Validadores.types.string,
         }) as Interface_Validadores_String;
     }
@@ -141,147 +247,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
 
 
 
-    validar.required = (mensaje?: string | undefined) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            if (!valor || (typeof valor === 'string' && valor.trim() === '')) {
-                if (mensaje) {
-                    return mensaje;
-                }
-                return 'Error: Este campo es requerido.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.min = (longitud: number, mensaje?: string | undefined) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const str = valor as string;
-
-            if (str.length < longitud) {
-                if (mensaje) {
-                    return mensaje;
-                }
-                return `Error: Debe tener al menos ${longitud} caracteres.`;
-            }
-
-            return true;
-        });
-    };
-
-    validar.max = (longitud: number, mensaje?: string | undefined) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const str = valor as string;
-
-            if (str.length > longitud) {
-                if (mensaje) {
-                    return mensaje;
-                }
-                return `Error: No puede superar los ${longitud} caracteres.`;
-            }
-
-            return true;
-        });
-    };
-
-    validar.exact = (longitud: number, mensaje?: string | undefined) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const str = valor as string;
-
-            if (str.length !== longitud) {
-                if (mensaje) {
-                    return mensaje;
-                }
-                return `Error: Debe tener exactamente ${longitud} caracteres.`;
-            }
-
-            return true;
-        });
-    };
-
-    validar.onlyLetters = (mensaje?: string | undefined) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const str = valor as string;
-
-            if (!/^[a-zA-Z]+$/.test(str)) {
-                if (mensaje) {
-                    return mensaje;
-                }
-                return 'Error: Solo se permiten letras.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.onlyNumbers = (mensaje?: string | undefined) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const str = valor as string;
-
-            if (!/^[0-9]+$/.test(str)) {
-                if (mensaje) {
-                    return mensaje;
-                }
-                return 'Error: Solo se permiten números.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.alphanumeric = (mensaje?: string | undefined) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const str = valor as string;
-
-            if (!/^[a-zA-Z0-9]+$/.test(str)) {
-                if (mensaje) {
-                    return mensaje;
-                }
-                return 'Error: Solo se permiten letras y números.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.regex = (expresion: RegExp, mensaje?: string | undefined) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const str = valor as string;
-
-            if (!expresion.test(str)) {
-                if (mensaje) {
-                    return mensaje;
-                }
-                return `Error: El valor no coincide con el patrón requerido.`;
-            }
-
-            return true;
-        });
-    };
+    // -- no apply
 
 
 
@@ -290,7 +256,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
 
 
 
-    return validar as Interface_Validadores_String;
+    return chainable(validar) as Interface_Validadores_String;
 }
 
 

@@ -20,56 +20,64 @@ interface Interface_Validadores_Number {
 
     /**
      * Valida que el valor no sea null ni undefined.
+     * @param mensaje - Mensaje de error personalizado (opcional).
      * @returns Función de validación.
      */
-    required(): Interface_Validadores_Number;
+    required(mensaje?: string): Interface_Validadores_Number;
 
     /**
      * Valida que el número sea mayor o igual al valor indicado.
      * @param numero - Valor mínimo permitido.
+     * @param mensaje - Mensaje de error personalizado (opcional).
      * @returns Función de validación.
      */
-    min(numero: number): Interface_Validadores_Number;
+    min(numero: number, mensaje?: string): Interface_Validadores_Number;
 
     /**
      * Valida que el número sea menor o igual al valor indicado.
      * @param numero - Valor máximo permitido.
+     * @param mensaje - Mensaje de error personalizado (opcional).
      * @returns Función de validación.
      */
-    max(numero: number): Interface_Validadores_Number;
+    max(numero: number, mensaje?: string): Interface_Validadores_Number;
 
     /**
      * Valida que el número esté dentro del rango especificado.
      * @param min - Límite inferior.
      * @param max - Límite superior.
+     * @param mensaje - Mensaje de error personalizado (opcional).
      * @returns Función de validación.
      */
-    between(min: number, max: number): Interface_Validadores_Number;
+    between(min: number, max: number, mensaje?: string): Interface_Validadores_Number;
 
     /**
      * Valida que el número sea positivo (> 0).
+     * @param mensaje - Mensaje de error personalizado (opcional).
      * @returns Función de validación.
      */
-    positive(): Interface_Validadores_Number;
+    positive(mensaje?: string): Interface_Validadores_Number;
 
     /**
      * Valida que el número sea negativo (< 0).
+     * @param mensaje - Mensaje de error personalizado (opcional).
      * @returns Función de validación.
      */
-    negative(): Interface_Validadores_Number;
+    negative(mensaje?: string): Interface_Validadores_Number;
 
     /**
      * Valida que el número sea entero.
+     * @param mensaje - Mensaje de error personalizado (opcional).
      * @returns Función de validación.
      */
-    integer(): Interface_Validadores_Number;
+    integer(mensaje?: string): Interface_Validadores_Number;
 
     /**
      * Valida que el número sea múltiplo de otro valor.
      * @param divisor - Número por el cual debe ser divisible.
+     * @param mensaje - Mensaje de error personalizado (opcional).
      * @returns Función de validación.
      */
-    multipleOf(divisor: number): Interface_Validadores_Number;
+    multipleOf(divisor: number, mensaje?: string): Interface_Validadores_Number;
 
     /**
      * Tipo de validador.
@@ -108,19 +116,122 @@ function Build_Validadores_Number(): Interface_Validadores_Number {
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
 
-    
+
     function chainable(
-        fn: (valor: unknown) => Type_Validadores_Response_Basic
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
     ): Interface_Validadores_Number {
-        return Object.assign(fn, {
-            required: validar.required,
-            min: validar.min,
-            max: validar.max,
-            between: validar.between,
-            positive: validar.positive,
-            negative: validar.negative,
-            integer: validar.integer,
-            multipleOf: validar.multipleOf,
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea un número
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (valor === null || valor === undefined) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
+            min: (numero: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num < numero) {
+                        return mensaje || `Error: Debe ser mayor o igual a ${numero}.`;
+                    }
+
+                    return true;
+                }),
+
+            max: (numero: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num > numero) {
+                        return mensaje || `Error: Debe ser menor o igual a ${numero}.`;
+                    }
+
+                    return true;
+                }),
+
+            between: (min: number, max: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num < min || num > max) {
+                        return mensaje || `Error: Debe estar entre ${min} y ${max}.`;
+                    }
+
+                    return true;
+                }),
+
+            positive: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num <= 0) {
+                        return mensaje || 'Error: Debe ser un número positivo.';
+                    }
+
+                    return true;
+                }),
+
+            negative: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num >= 0) {
+                        return mensaje || 'Error: Debe ser un número negativo.';
+                    }
+
+                    return true;
+                }),
+
+            integer: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (!Number.isInteger(num)) {
+                        return mensaje || 'Error: Debe ser un número entero.';
+                    }
+
+                    return true;
+                }),
+
+            multipleOf: (divisor: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num % divisor !== 0) {
+                        return mensaje || `Error: Debe ser múltiplo de ${divisor}.`;
+                    }
+
+                    return true;
+                }),
             type: Consts_Validadores.types.number,
         }) as Interface_Validadores_Number;
     }
@@ -132,132 +243,16 @@ function Build_Validadores_Number(): Interface_Validadores_Number {
 
 
 
-    validar.required = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
+    // -- no apply
 
-            if (valor === null || valor === undefined) {
-                return 'Error: Este campo es requerido.';
-            }
 
-            return true;
-        });
-    };
-
-    validar.min = (numero: number) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const num = valor as number;
-
-            if (num < numero) {
-                return `Error: Debe ser mayor o igual a ${numero}.`;
-            }
-
-            return true;
-        });
-    };
-
-    validar.max = (numero: number) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const num = valor as number;
-
-            if (num > numero) {
-                return `Error: Debe ser menor o igual a ${numero}.`;
-            }
-
-            return true;
-        });
-    };
-
-    validar.between = (min: number, max: number) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const num = valor as number;
-
-            if (num < min || num > max) {
-                return `Error: Debe estar entre ${min} y ${max}.`;
-            }
-
-            return true;
-        });
-    };
-
-    validar.positive = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const num = valor as number;
-
-            if (num <= 0) {
-                return 'Error: Debe ser un número positivo.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.negative = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const num = valor as number;
-
-            if (num >= 0) {
-                return 'Error: Debe ser un número negativo.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.integer = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const num = valor as number;
-
-            if (!Number.isInteger(num)) {
-                return 'Error: Debe ser un número entero.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.multipleOf = (divisor: number) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const num = valor as number;
-
-            if (num % divisor !== 0) {
-                return `Error: Debe ser múltiplo de ${divisor}.`;
-            }
-
-            return true;
-        });
-    };
-
-    
 
     /*RETURN ------------------------------------------------------------------------------------*/
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
 
 
-    return validar as Interface_Validadores_Number;
+    return chainable(validar) as Interface_Validadores_Number;
 }
 
 
