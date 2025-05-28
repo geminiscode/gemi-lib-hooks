@@ -21,10 +21,10 @@ interface Interface_Validadores_String {
     /**
      * Valida que el valor sea un string y no esté vacío.
      * @param valor - Valor a validar.
-     * @param mensaje - Mensaje de error si la validación falla.
+     * @param mensaje - Mensaje opcional de error si la validación falla. El usuario puede especificar un mensaje personalizado o no
      * @returns true si el valor es un string no vacío, de lo contrario un mensaje de error.
      */
-    required(mensaje: string): Interface_Validadores_String;
+    required(mensaje?: string | undefined): Interface_Validadores_String;
 
     /**
      * Valida que el valor sea un string y tenga una longitud mínima.
@@ -32,7 +32,7 @@ interface Interface_Validadores_String {
      * @param mensaje - Mensaje de error si la validación falla.
      * @returns Función de validación.
      */
-    min(longitud: number, mensaje: string): Interface_Validadores_String;
+    min(longitud: number, mensaje?: string | undefined): Interface_Validadores_String;
 
     /**
      * Valida que el valor sea un string y tenga una longitud máxima.
@@ -40,7 +40,7 @@ interface Interface_Validadores_String {
      * @param mensaje - Mensaje de error si la validación falla.
      * @returns Función de validación.
      */
-    max(longitud: number, mensaje: string): Interface_Validadores_String;
+    max(longitud: number, mensaje?: string | undefined): Interface_Validadores_String;
 
     /**
      * Valida que el valor sea un string y tenga una longitud exacta.
@@ -48,7 +48,7 @@ interface Interface_Validadores_String {
      * @param mensaje - Mensaje de error si la validación falla.
      * @returns Función de validación.
      */
-    exact(longitud: number, mensaje: string): Interface_Validadores_String;
+    exact(longitud: number, mensaje?: string | undefined): Interface_Validadores_String;
 
     /**
      * Valida que el valor sea un string y contenga solo letras.
@@ -56,7 +56,7 @@ interface Interface_Validadores_String {
      * @param mensaje - Mensaje de error si la validación falla.
      * @returns true si el valor es un string con letras, de lo contrario un mensaje de error.
      */
-    onlyLetters(mensaje: string): Interface_Validadores_String;
+    onlyLetters(mensaje?: string | undefined): Interface_Validadores_String;
 
     /**
      * Valida que el valor sea un string y contenga solo números.
@@ -64,7 +64,7 @@ interface Interface_Validadores_String {
      * @param mensaje - Mensaje de error si la validación falla.
      * @returns true si el valor es un string con números, de lo contrario un mensaje de error.
      */
-    onlyNumbers(mensaje: string): Interface_Validadores_String;
+    onlyNumbers(mensaje?: string | undefined): Interface_Validadores_String;
 
     /**
      * Valida que el valor sea un string y contenga solo letras y números.
@@ -72,7 +72,7 @@ interface Interface_Validadores_String {
      * @param mensaje - Mensaje de error si la validación falla.
      * @returns true si el valor es un string con letras y números, de lo contrario un mensaje de error.
      */
-    alphanumeric(mensaje: string): Interface_Validadores_String;
+    alphanumeric(mensaje?: string | undefined): Interface_Validadores_String;
 
     /**
      * Valida que el valor sea un string y cumpla con una expresión regular.
@@ -80,7 +80,7 @@ interface Interface_Validadores_String {
      * @param mensaje - Mensaje de error si la validación falla.
      * @returns Función de validación.
      */
-    regex( expresion: RegExp, mensaje: string ): Interface_Validadores_String;
+    regex( expresion: RegExp, mensaje?: string | undefined ): Interface_Validadores_String;
 
     /**
      * Tipo de validador.
@@ -141,12 +141,12 @@ function Build_Validadores_String(): Interface_Validadores_String {
 
 
 
-    validar.required = (mensaje: string) => {
+    validar.required = (mensaje?: string | undefined) => {
         return chainable((valor: unknown): Type_Validadores_Response_Basic => {
             const result = validar(valor);
             if (typeof result === 'string') return result;
 
-            if (!valor) {
+            if (!valor || (typeof valor === 'string' && valor.trim() === '')) {
                 if (mensaje) {
                     return mensaje;
                 }
@@ -157,7 +157,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
         });
     };
 
-    validar.min = (longitud: number, mensaje: string) => {
+    validar.min = (longitud: number, mensaje?: string | undefined) => {
         return chainable((valor: unknown): Type_Validadores_Response_Basic => {
             const result = validar(valor);
             if (typeof result === 'string') return result;
@@ -175,7 +175,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
         });
     };
 
-    validar.max = (longitud: number, mensaje: string) => {
+    validar.max = (longitud: number, mensaje?: string | undefined) => {
         return chainable((valor: unknown): Type_Validadores_Response_Basic => {
             const result = validar(valor);
             if (typeof result === 'string') return result;
@@ -193,7 +193,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
         });
     };
 
-    validar.exact = (longitud: number, mensaje: string) => {
+    validar.exact = (longitud: number, mensaje?: string | undefined) => {
         return chainable((valor: unknown): Type_Validadores_Response_Basic => {
             const result = validar(valor);
             if (typeof result === 'string') return result;
@@ -211,7 +211,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
         });
     };
 
-    validar.onlyLetters = (mensaje: string) => {
+    validar.onlyLetters = (mensaje?: string | undefined) => {
         return chainable((valor: unknown): Type_Validadores_Response_Basic => {
             const result = validar(valor);
             if (typeof result === 'string') return result;
@@ -229,7 +229,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
         });
     };
 
-    validar.onlyNumbers = (mensaje: string) => {
+    validar.onlyNumbers = (mensaje?: string | undefined) => {
         return chainable((valor: unknown): Type_Validadores_Response_Basic => {
             const result = validar(valor);
             if (typeof result === 'string') return result;
@@ -247,7 +247,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
         });
     };
 
-    validar.alphanumeric = (mensaje: string) => {
+    validar.alphanumeric = (mensaje?: string | undefined) => {
         return chainable((valor: unknown): Type_Validadores_Response_Basic => {
             const result = validar(valor);
             if (typeof result === 'string') return result;
@@ -265,7 +265,7 @@ function Build_Validadores_String(): Interface_Validadores_String {
         });
     };
 
-    validar.regex = (expresion: RegExp, mensaje: string) => {
+    validar.regex = (expresion: RegExp, mensaje?: string | undefined) => {
         return chainable((valor: unknown): Type_Validadores_Response_Basic => {
             const result = validar(valor);
             if (typeof result === 'string') return result;
@@ -273,7 +273,10 @@ function Build_Validadores_String(): Interface_Validadores_String {
             const str = valor as string;
 
             if (!expresion.test(str)) {
-                return mensaje;
+                if (mensaje) {
+                    return mensaje;
+                }
+                return `Error: El valor no coincide con el patrón requerido.`;
             }
 
             return true;

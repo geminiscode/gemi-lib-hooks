@@ -4,30 +4,10 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import { Validadores } from './libs/index'
 
+
+
 function App() {
     const [count, setCount] = useState(0)
-
-
-
-    const schema = Validadores.object.shape({
-        id: Validadores.number.required(),
-        name: Validadores.string.min(3, 'Muy corto').required(),
-        address: Validadores.object.shape({
-            street: Validadores.string,
-            zip: Validadores.number.min(1000, 'Código postal inválido'),
-        }).required(),
-    });
-
-    const valor = {
-        id: 123,
-        name: 'Ju',
-        address: {
-            street: "hola como estas",
-            zip: 12345,
-        },
-    };
-
-    console.log(schema(valor)); // true
 
 
 
@@ -56,5 +36,7 @@ function App() {
         </>
     )
 }
+
+
 
 export default App
