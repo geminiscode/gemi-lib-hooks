@@ -1,0 +1,1821 @@
+// usePropTypes/validadores/Constants.tsx
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*MAIN ------------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+const Consts_Validadores = {
+  types: {
+    string: "string",
+    number: "number",
+    bigint: "bigint",
+    boolean: "boolean",
+    undefined: "undefined",
+    null: "null",
+    symbol: "symbol",
+    array: "array",
+    object: "object",
+    instanceof: "instanceof",
+  },
+} as const;
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*EXPORT ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+export {Consts_Validadores};
+// usePropTypes/validadores/Types.tsx
+//Types.tsx
+/**
+ *  -   En este archivo se definen los tipos de validadores que se utilizan en la librería de validación de propiedades.
+ *  -   Estos tipos son utilizados para definir la estructura de los validadores y asegurar que se cumplan las 
+ *  expectativas de entrada y salida.
+ */
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* TYPES ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+// Definición de respuesta para los validadores
+type Type_Validadores_Response_Basic = true | string;
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+// Interfaz para validar funciones que pueden recibir 1 o 2 argumentos
+interface Type_Validadores {
+    // Versión básica: solo valor
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    // Versión extendida: valor + esquema u otro dato
+    (valor: unknown, esquema: any): Type_Validadores_Response_Basic;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* EXPORT ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+export type { Type_Validadores, Type_Validadores_Response_Basic };
+// usePropTypes/validadores/Validadores.tsx
+// Validadores.tsx
+import { Consts_Validadores } from "./Constants";
+import { Validadores_Array } from "./Validadores_Array";
+import { Validadores_BigInt } from "./Validadores_BigInt";
+import { Validadores_Boolean } from "./Validadores_Boolean";
+import { Validadores_InstanceOf } from "./Validadores_InstanceOf";
+import { Validadores_Number } from "./Validadores_Number";
+import { Validadores_Object } from "./Validadores_Object";
+import { Validadores_String } from "./Validadores_String";
+import { Validadores_Symbol } from "./Validadores_Symbol";
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* TYPES ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+
+// Tipo para cada campo del esquema: string | number | boolean, etc.
+type Type_Validador_Elemento = Interface_Validadores[keyof Interface_Validadores];
+
+type Type_Validador_Elemento_Response = string | undefined;
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*INTERFACES ------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+interface Interface_Validadores {
+    string: typeof Validadores_String & { type: typeof Consts_Validadores.types.string };
+    number: typeof Validadores_Number & { type: typeof Consts_Validadores.types.number };
+    bigint: typeof Validadores_BigInt & { type: typeof Consts_Validadores.types.bigint };
+    boolean: typeof Validadores_Boolean & { type: typeof Consts_Validadores.types.boolean };
+    symbol: typeof Validadores_Symbol & { type: typeof Consts_Validadores.types.symbol };
+    array: typeof Validadores_Array & { type: typeof Consts_Validadores.types.array };
+    instanceof: typeof Validadores_InstanceOf & { type: typeof Consts_Validadores.types.instanceof };
+    object: typeof Validadores_Object & { type: typeof Consts_Validadores.types.object };
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*MAIN ------------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+const Validadores: Interface_Validadores = {
+    string: Validadores_String,
+    number: Validadores_Number,
+    bigint: Validadores_BigInt,
+    boolean: Validadores_Boolean,
+    symbol: Validadores_Symbol,
+    array: Validadores_Array,
+    instanceof: Validadores_InstanceOf,
+    object: Validadores_Object,
+};
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*METHODS ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+// Función para obtener el tipo del validador
+function getValidatorType(validator: Type_Validador_Elemento): Type_Validador_Elemento_Response {
+    if ('type' in validator) {
+      return (validator as { type: string }).type;
+    }
+    return undefined;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*EXPORT ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+export { getValidatorType };
+export type { Interface_Validadores, Type_Validador_Elemento, Type_Validador_Elemento_Response };
+export default Validadores;
+// usePropTypes/validadores/Validadores_Array.tsx
+import type { Type_Validadores_Response_Basic, Type_Validadores } from "./Types";
+import { getValidatorType, type Interface_Validadores } from "./Validadores";
+import { Consts_Validadores } from "./Constants";
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* TYPES ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+// -- no apply
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+interface Config {
+    /**
+     * Indica si el array puede estar vacío.
+     * @default false
+     */
+    optionalEmpty?: boolean;
+    /**
+     * Longitud mínima permitida del array.
+     * @default 0
+     */
+    minLength?: number;
+    /**
+     * Longitud máxima permitida del array.
+     * @default Infinity
+     */
+    maxLength?: number;
+    /**
+     * Tipos/validadores permitidos para cualquier elemento del array.
+     */
+    of?: Interface_Validadores[keyof Interface_Validadores][];
+}
+
+interface Interface_Validadores_Array {
+    /**
+     * Valida que el valor sea un array y cumpla con las condiciones definidas.
+     * @param valor - Valor a validar.
+     * @returns true si es válido, sino un mensaje de error.
+     */
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    /**
+     * Permite que el array esté vacío.
+     * @returns Función de validación actualizada.
+     */
+    optionalEmpty(): Interface_Validadores_Array;
+
+    /**
+     * Valida que el array tenga al menos la longitud especificada.
+     * @param length - Longitud mínima requerida.
+     * @returns Función de validación actualizada.
+     */
+    minLength(length: number): Interface_Validadores_Array;
+
+    /**
+     * Valida que el array no exceda la longitud especificada.
+     * @param length - Longitud máxima permitida.
+     * @returns Función de validación actualizada.
+     */
+    maxLength(length: number): Interface_Validadores_Array;
+
+    /**
+     * Define los tipos/validadores permitidos para cualquier elemento del array.
+     * Un elemento pasa si es aceptado por **al menos uno** de los validadores.
+     * @param schema - Esquema para validar elementos.
+     * @returns Función de validación actualizada.
+     */
+    of(schema: Interface_Validadores[keyof Interface_Validadores] | Interface_Validadores[keyof Interface_Validadores][]): Interface_Validadores_Array;
+
+    /**
+     * Configura opciones avanzadas del validador.
+     * @param config - Objeto con configuraciones como `minLength`, `maxLength`, etc.
+     * @returns Función de validación actualizada.
+     */
+    __config(config: Partial<Config>): Interface_Validadores_Array;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.array;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* BUILDER --------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+function Build_Validadores_Array(): Interface_Validadores_Array {
+
+
+
+    /* MAIN -------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+        if (!Array.isArray(valor)) {
+            return "Error: El valor proporcionado no es un array.";
+        }
+
+        const config = baseValidator.__internalConfig || {
+            optionalEmpty: false,
+            minLength: 0,
+            maxLength: Infinity,
+            of: undefined,
+        };
+
+        const length = valor.length;
+
+        // Validar longitud mínima
+        if (length < config.minLength!) {
+            return `Error: El array debe tener al menos ${config.minLength} elementos.`;
+        }
+
+        // Validar longitud máxima
+        if (length > config.maxLength!) {
+            return `Error: El array no puede tener más de ${config.maxLength} elementos.`;
+        }
+
+        // Si está vacío y no se permite
+        if (length === 0 && !config.optionalEmpty) {
+            return "Error: El array no puede estar vacío.";
+        }
+
+        // Validar elementos si hay esquema definido
+        if (config.of?.length) {
+            for (let i = 0; i < length; i++) {
+                const element = valor[i];
+                let isValid = false;
+                let firstError: string | null = null;
+
+                // Obtener el tipo nativo del valor (string, number, boolean, etc.)
+                const elementType = typeof element;
+
+                // Filtrar solo los validadores que corresponden al tipo del valor
+                const matchingValidators = config.of.filter((validator) => {
+                    const validatorType = getValidatorType(validator);
+                    return validatorType === elementType;
+                });
+
+                // Si hay validadores que coinciden con el tipo, usarlos
+                if (matchingValidators.length > 0) {
+                    for (const validator of matchingValidators) {
+                        if (typeof validator === "function") {
+                            const result = validator(element);
+
+                            if (result === true) {
+                                isValid = true;
+                                break;
+                            } else if (!firstError && typeof result === "string") {
+                                firstError = result;
+                            }
+                        }
+                    }
+                } else {
+                    // Si ningún validador corresponde al tipo del valor
+                    const allowedTypes = config.of
+                        .map((v) => getValidatorType(v) || 'desconocido')
+                        .join(', ');
+
+                    return `Error en posición [${i}]: Tipo "${elementType}" no permitido. Se esperaba: ${allowedTypes}. Valor recibido: ${element}`;
+                }
+
+                if (!isValid && firstError) {
+                    return `Error en posición [${i}]: ${firstError}`;
+                }
+
+                if (!isValid) {
+                    const allowedTypes = config.of
+                        .map((v) => getValidatorType(v) || 'desconocido')
+                        .join(', ');
+
+                    return `Error en posición [${i}]: El valor no coincide con ninguno de los tipos permitidos: ${allowedTypes}`;
+                }
+            }
+        }
+
+        return true;
+    };
+
+    const baseValidator = validar as Interface_Validadores_Array & {
+        __internalConfig?: Config;
+    };
+
+    baseValidator.__internalConfig = {
+        optionalEmpty: false,
+        minLength: 0,
+        maxLength: Infinity,
+        of: undefined,
+    };
+
+
+
+    /* CHAINABLE UTILITY ------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    function chainable(fn: Type_Validadores): Interface_Validadores_Array {
+        return Object.assign(fn, {
+            optionalEmpty: validar.optionalEmpty,
+            minLength: validar.minLength,
+            maxLength: validar.maxLength,
+            of: validar.of,
+            type: Consts_Validadores.types.array,
+            __config: validar.__config,
+        }) as Interface_Validadores_Array;
+    }
+
+
+
+    /* CHAINED METHODS --------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    validar.optionalEmpty = () => {
+        baseValidator.__internalConfig = {
+            ...baseValidator.__internalConfig,
+            optionalEmpty: true,
+        };
+        return chainable(validar);
+    };
+
+    validar.minLength = (length: number) => {
+        baseValidator.__internalConfig = {
+            ...baseValidator.__internalConfig,
+            minLength: length,
+        };
+        return chainable(validar);
+    };
+
+    validar.maxLength = (length: number) => {
+        baseValidator.__internalConfig = {
+            ...baseValidator.__internalConfig,
+            maxLength: length,
+        };
+        return chainable(validar);
+    };
+
+    validar.of = (schema: Interface_Validadores[keyof Interface_Validadores] | Interface_Validadores[keyof Interface_Validadores][]) => {
+        const validators = Array.isArray(schema) ? schema : [schema];
+
+        baseValidator.__internalConfig = {
+            ...baseValidator.__internalConfig,
+            of: validators,
+        };
+        return chainable(validar);
+    };
+
+    validar.__config = (config: Partial<Config>): Interface_Validadores_Array => {
+        baseValidator.__internalConfig = {
+            ...baseValidator.__internalConfig,
+            ...config,
+        };
+        return chainable(validar);
+    };
+
+
+
+    /* RETURN ------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+    
+
+    return validar as Interface_Validadores_Array;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* EXPORT ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+export type { Interface_Validadores_Array };
+export const Validadores_Array = Build_Validadores_Array();
+// usePropTypes/validadores/Validadores_BigInt.tsx
+import { Consts_Validadores } from './Constants';
+import type { Type_Validadores_Response_Basic } from './Types';
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* TYPES ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+// -- no apply
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+interface Interface_Validadores_BigInt {
+    /**
+     * Valida que el valor sea exactamente un `bigint`.
+     * @param valor - Valor a validar.
+     * @returns true si es bigint, sino un mensaje de error.
+     */
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    /**
+     * Valida que el valor NO sea null/undefined y sea `bigint`.
+     * @param mensaje - Mensaje opcional de error.
+     * @returns Función de validación encadenable.
+     */
+    required(mensaje?: string): Interface_Validadores_BigInt;
+
+    /**
+     * Valida que el valor sea mayor o igual a cierto número.
+     * @param numero - Valor mínimo (number o bigint).
+     * @param mensaje - Mensaje opcional de error.
+     * @returns Función de validación encadenable.
+     */
+    min(numero: number | bigint, mensaje?: string): Interface_Validadores_BigInt;
+
+    /**
+     * Valida que el valor sea menor o igual a cierto número.
+     * @param numero - Valor máximo (number o bigint).
+     * @param mensaje - Mensaje opcional de error.
+     * @returns Función de validación encadenable.
+     */
+    max(numero: number | bigint, mensaje?: string): Interface_Validadores_BigInt;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.bigint;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* BUILDER --------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+function Build_Validadores_BigInt(): Interface_Validadores_BigInt {
+
+
+
+    /* MAIN -------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+        if (typeof valor !== 'bigint') {
+            return 'Error: El valor debe ser `bigint`.';
+        }
+        return true;
+    };
+
+
+
+    /* CHAINABLE UTILITY ------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_BigInt {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea `bigint`
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (valor === null || valor === undefined) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
+            min: (numero: number | bigint, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const big = valor as bigint;
+                    const limite = BigInt(numero);
+
+                    if (big < limite) {
+                        return mensaje || `Error: Debe ser mayor o igual a ${limite}n.`;
+                    }
+
+                    return true;
+                }),
+
+            max: (numero: number | bigint, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const big = valor as bigint;
+                    const limite = BigInt(numero);
+
+                    if (big > limite) {
+                        return mensaje || `Error: Debe ser menor o igual a ${limite}n.`;
+                    }
+
+                    return true;
+                }),
+
+            type: Consts_Validadores.types.bigint,
+        }) as Interface_Validadores_BigInt;
+    }
+
+
+
+    /* CHAINED METHODS --------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    // -- no apply
+
+
+
+    /* RETURN -----------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    return chainable(validar) as Interface_Validadores_BigInt;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* EXPORT ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+export type { Interface_Validadores_BigInt };
+export const Validadores_BigInt = Build_Validadores_BigInt();
+// usePropTypes/validadores/Validadores_Boolean.tsx
+// Validadores_Boolean.tsx
+import { Consts_Validadores } from './Constants';
+import type { Type_Validadores_Response_Basic } from './Types';
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+interface Interface_Validadores_Boolean {
+    /**
+     * Valida que el valor sea un booleano.
+     * @param valor - Valor a validar.
+     * @returns true si es un booleano válido, sino un mensaje de error.
+     */
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    /**
+     * Valida que el valor no sea null ni undefined.
+     * @param mensaje - Mensaje opcional de error si falla la validación.
+     * @returns Función de validación.
+     */
+    required(mensaje?: string): Interface_Validadores_Boolean;
+
+    /**
+     * Valida que el valor sea exactamente `true`.
+     * @param mensaje - Mensaje opcional de error si falla la validación.
+     * @returns Función de validación.
+     */
+    true(mensaje?: string): Interface_Validadores_Boolean;
+
+    /**
+     * Valida que el valor sea exactamente `false`.
+     * @param mensaje - Mensaje opcional de error si falla la validación.
+     * @returns Función de validación.
+     */
+    false(mensaje?: string): Interface_Validadores_Boolean;
+
+    /**
+     * Valida con una función personalizada.
+     * @param fn - Función de validación personalizada.
+     * @returns Función de validación.
+     */
+    custom(fn: (value: boolean) => Type_Validadores_Response_Basic): Interface_Validadores_Boolean;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.boolean;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* BUILDER --------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+function Build_Validadores_Boolean(): Interface_Validadores_Boolean {
+
+
+
+    /*MAIN --------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+        if (typeof valor !== 'boolean') {
+            return 'Error: El valor proporcionado no es un booleano.';
+        }
+        return true;
+    };
+
+
+
+    /*CHAINABLED BUILDER ------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_Boolean {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea boolean
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (valor === null || valor === undefined) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
+            true: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const bool = valor as boolean;
+
+                    if (bool !== true) {
+                        return mensaje || 'Error: El valor debe ser verdadero.';
+                    }
+
+                    return true;
+                }),
+
+            false: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const bool = valor as boolean;
+
+                    if (bool !== false) {
+                        return mensaje || 'Error: El valor debe ser falso.';
+                    }
+
+                    return true;
+                }),
+
+            custom: (fn: (value: boolean) => Type_Validadores_Response_Basic) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const bool = valor as boolean;
+
+                    return fn(bool);
+                }),
+
+            type: Consts_Validadores.types.boolean,
+        }) as Interface_Validadores_Boolean;
+    }
+
+
+
+    /*CHAINED METHODS ---------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    // -- no apply
+
+
+
+    /*RETURN ------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    return chainable(validar) as Interface_Validadores_Boolean;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* EXPORT ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+export type { Interface_Validadores_Boolean };
+export const Validadores_Boolean = Build_Validadores_Boolean();
+// usePropTypes/validadores/Validadores_InstanceOf.tsx
+// Validadores_InstanceOf.tsx
+import { Consts_Validadores } from './Constants';
+import type { Type_Validadores_Response_Basic } from './Types';
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+interface Interface_Validadores_InstanceOf {
+    /**
+     * Valida que el valor sea una instancia de una clase específica.
+     * @param valor - Valor a validar.
+     * @returns true si es válido, sino un mensaje de error.
+     */
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    /**
+     * Establece la clase esperada para la validación.
+     * @param clase - Clase a comparar (ej. Date, Promise).
+     * @param mensaje - Mensaje opcional si falla la validación.
+     * @returns Función de validación encadenable.
+     */
+    instanceOf<T>(clase: new (...args: any[]) => T, mensaje?: string): Interface_Validadores_InstanceOf;
+
+    /**
+     * Establece la clase prohibida para la validación.
+     * @param clase - Clase a excluir (ej. String, Array).
+     * @param mensaje - Mensaje opcional si falla la validación.
+     * @returns Función de validación encadenable.
+     */
+    notInstanceOf<T>(clase: new (...args: any[]) => T, mensaje?: string): Interface_Validadores_InstanceOf;
+
+    /**
+     * Tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.instanceof;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* BUILDER --------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+function Build_Validadores_InstanceOf(): Interface_Validadores_InstanceOf {
+
+
+
+    /*MAIN --------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+        if (valor === null || valor === undefined) {
+            return 'Error: El valor no puede ser null ni undefined.';
+        }
+        return true;
+    };
+
+
+
+    /*CHAINABLED BUILDER ------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_InstanceOf {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que no sea null/undefined
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            instanceOf: createInstanceOfMethod(combinedValidator),
+            notInstanceOf: createNotInstanceOfMethod(combinedValidator),
+            type: Consts_Validadores.types.instanceof,
+        }) as Interface_Validadores_InstanceOf;
+    }
+
+
+
+    /*CHAINED METHODS ---------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    function createInstanceOfMethod(
+        combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
+    ): <T>(clase: new (...args: any[]) => T, mensaje?: string) => Interface_Validadores_InstanceOf {
+        return function <T>(
+            clase: new (...args: any[]) => T,
+            mensaje?: string
+        ): Interface_Validadores_InstanceOf {
+            return chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+
+                const className = clase.name || 'Clase desconocida';
+                const receivedType = valor?.constructor?.name || typeof valor;
+
+                if (!(valor instanceof clase)) {
+                    return mensaje || `Error: El valor debe ser una instancia de ${className}, pero se recibió un valor de tipo ${receivedType}.`;
+                }
+
+                return true;
+            });
+        };
+    }
+
+    function createNotInstanceOfMethod(
+        combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
+    ): <T>(clase: new (...args: any[]) => T, mensaje?: string) => Interface_Validadores_InstanceOf {
+        return function <T>(
+            clase: new (...args: any[]) => T,
+            mensaje?: string
+        ): Interface_Validadores_InstanceOf {
+            return chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+
+                const className = clase.name || 'Clase desconocida';
+
+                if (valor instanceof clase) {
+                    return mensaje || `Error: El valor NO debe ser una instancia de ${className}.`;
+                }
+
+                return true;
+            });
+        };
+    }
+
+
+    
+    /*RETURN ------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    return chainable(validar) as Interface_Validadores_InstanceOf;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* EXPORT ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+export type { Interface_Validadores_InstanceOf };
+export const Validadores_InstanceOf = Build_Validadores_InstanceOf();
+// usePropTypes/validadores/Validadores_Number.tsx
+// Validadores_Number.tsx
+import { Consts_Validadores } from "./Constants";
+import { Type_Validadores_Response_Basic } from "./Types";
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+interface Interface_Validadores_Number {
+    /**
+     * Valida que el valor sea un número.
+     * @param valor - Valor a validar.
+     * @returns true si es un número válido, sino un mensaje de error.
+     */
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    /**
+     * Valida que el valor no sea null ni undefined.
+     * @param mensaje - Mensaje de error personalizado (opcional).
+     * @returns Función de validación.
+     */
+    required(mensaje?: string): Interface_Validadores_Number;
+
+    /**
+     * Valida que el número sea mayor o igual al valor indicado.
+     * @param numero - Valor mínimo permitido.
+     * @param mensaje - Mensaje de error personalizado (opcional).
+     * @returns Función de validación.
+     */
+    min(numero: number, mensaje?: string): Interface_Validadores_Number;
+
+    /**
+     * Valida que el número sea menor o igual al valor indicado.
+     * @param numero - Valor máximo permitido.
+     * @param mensaje - Mensaje de error personalizado (opcional).
+     * @returns Función de validación.
+     */
+    max(numero: number, mensaje?: string): Interface_Validadores_Number;
+
+    /**
+     * Valida que el número esté dentro del rango especificado.
+     * @param min - Límite inferior.
+     * @param max - Límite superior.
+     * @param mensaje - Mensaje de error personalizado (opcional).
+     * @returns Función de validación.
+     */
+    between(min: number, max: number, mensaje?: string): Interface_Validadores_Number;
+
+    /**
+     * Valida que el número sea positivo (> 0).
+     * @param mensaje - Mensaje de error personalizado (opcional).
+     * @returns Función de validación.
+     */
+    positive(mensaje?: string): Interface_Validadores_Number;
+
+    /**
+     * Valida que el número sea negativo (< 0).
+     * @param mensaje - Mensaje de error personalizado (opcional).
+     * @returns Función de validación.
+     */
+    negative(mensaje?: string): Interface_Validadores_Number;
+
+    /**
+     * Valida que el número sea entero.
+     * @param mensaje - Mensaje de error personalizado (opcional).
+     * @returns Función de validación.
+     */
+    integer(mensaje?: string): Interface_Validadores_Number;
+
+    /**
+     * Valida que el número sea múltiplo de otro valor.
+     * @param divisor - Número por el cual debe ser divisible.
+     * @param mensaje - Mensaje de error personalizado (opcional).
+     * @returns Función de validación.
+     */
+    multipleOf(divisor: number, mensaje?: string): Interface_Validadores_Number;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.number;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* BUILDER --------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+function Build_Validadores_Number(): Interface_Validadores_Number {
+
+
+
+    /*MAIN --------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+        if (typeof valor !== 'number' || isNaN(valor)) {
+            return 'Error: El valor proporcionado no es un número válido.';
+        }
+        return true;
+    };
+
+
+
+    /*CHAINABLED BUILDER ------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_Number {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea un número
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (valor === null || valor === undefined) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
+            min: (numero: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num < numero) {
+                        return mensaje || `Error: Debe ser mayor o igual a ${numero}.`;
+                    }
+
+                    return true;
+                }),
+
+            max: (numero: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num > numero) {
+                        return mensaje || `Error: Debe ser menor o igual a ${numero}.`;
+                    }
+
+                    return true;
+                }),
+
+            between: (min: number, max: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num < min || num > max) {
+                        return mensaje || `Error: Debe estar entre ${min} y ${max}.`;
+                    }
+
+                    return true;
+                }),
+
+            positive: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num <= 0) {
+                        return mensaje || 'Error: Debe ser un número positivo.';
+                    }
+
+                    return true;
+                }),
+
+            negative: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num >= 0) {
+                        return mensaje || 'Error: Debe ser un número negativo.';
+                    }
+
+                    return true;
+                }),
+
+            integer: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (!Number.isInteger(num)) {
+                        return mensaje || 'Error: Debe ser un número entero.';
+                    }
+
+                    return true;
+                }),
+
+            multipleOf: (divisor: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const num = valor as number;
+                    if (num % divisor !== 0) {
+                        return mensaje || `Error: Debe ser múltiplo de ${divisor}.`;
+                    }
+
+                    return true;
+                }),
+            type: Consts_Validadores.types.number,
+        }) as Interface_Validadores_Number;
+    }
+
+
+
+    /*CHAINED METHODS ---------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    // -- no apply
+
+
+
+    /*RETURN ------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    return chainable(validar) as Interface_Validadores_Number;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* EXPORT --------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+export type { Interface_Validadores_Number };
+export const Validadores_Number = Build_Validadores_Number();
+// usePropTypes/validadores/Validadores_Object.tsx
+// Validadores_Object.tsx
+import { Consts_Validadores } from './Constants';
+import type { Type_Validadores_Response_Basic } from './Types';
+import { getValidatorType, Interface_Validadores } from './Validadores';
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* TYPES ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+interface Interface_Config_Object_Property {
+    validator: (value: unknown) => Type_Validadores_Response_Basic;
+    isRequired: boolean;
+}
+
+interface Interface_Config_Object {
+    properties?: Record<string, Interface_Config_Object_Property>;
+    optional?: boolean;
+    allowUnknown?: boolean;
+    required?: boolean;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+interface Interface_Validadores_Object_Chain {
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    shape(
+        schema: Record<string, Interface_Validadores[keyof Interface_Validadores]>
+    ): Interface_Validadores_Object_Chain;
+
+    allowUnknown(): Interface_Validadores_Object_Chain;
+    required(): Interface_Validadores_Object_Chain;
+    optional(): Interface_Validadores_Object_Chain;
+
+    type: typeof Consts_Validadores.types.object;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* BUILDER --------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+function Build_Validadores_Object(): Interface_Validadores_Object_Chain {
+    let config: Interface_Config_Object = {
+        properties: {},
+        optional: false,
+        allowUnknown: false,
+    };
+
+    const validar = ((valor: unknown): Type_Validadores_Response_Basic => {
+        if (config.optional && valor === undefined) return true;
+        if (config.required && (valor === undefined || valor === null)) {
+            return 'Error: Este campo es requerido.';
+        }
+        if (typeof valor !== 'object' || Array.isArray(valor) || valor === null) {
+            return 'Error: El valor debe ser un objeto.';
+        }
+
+        const obj = valor as Record<string, unknown>;
+
+        // Validar propiedades definidas
+        for (const key in config.properties) {
+            const propConfig = config.properties[key];
+            const value = obj[key];
+
+            const result = propConfig.validator(value);
+
+            if (typeof result === 'string') {
+                return `Error en propiedad "${key}": ${result}`;
+            }
+        }
+
+        // Validar propiedades desconocidas
+        if (!config.allowUnknown) {
+            for (const key in obj) {
+                if (!(key in (config.properties || {}))) {
+                    return `Error: La propiedad "${key}" no está permitida en este objeto.`;
+                }
+            }
+        }
+
+        return true;
+    }) as Interface_Validadores_Object_Chain;
+
+    validar.type = Consts_Validadores.types.object;
+
+    function chainable(fn: (valor: unknown) => Type_Validadores_Response_Basic): Interface_Validadores_Object_Chain {
+        return Object.assign(fn, {
+            shape: validar.shape,
+            allowUnknown: validar.allowUnknown,
+            required: validar.required,
+            optional: validar.optional,
+            type: Consts_Validadores.types.object,
+        }) as Interface_Validadores_Object_Chain;
+    }
+
+    validar.shape = (schema) => {
+        const newProperties: Record<string, Interface_Config_Object_Property> = {};
+
+        for (const key in schema) {
+            const validator = schema[key];
+            const isRequired = getValidatorType(validator) !== 'undefined';
+
+            newProperties[key] = {
+                validator: validator as (value: unknown) => Type_Validadores_Response_Basic,
+                isRequired,
+            };
+        }
+
+        config = {
+            ...config,
+            properties: {
+                ...(config.properties || {}),
+                ...newProperties,
+            },
+        };
+
+        return chainable(validar);
+    };
+
+    validar.allowUnknown = () => {
+        config = {
+            ...config,
+            allowUnknown: true,
+        };
+        return chainable(validar);
+    };
+
+    validar.required = () => {
+        config = {
+            ...config,
+            required: true,
+            optional: false,
+        };
+        return chainable(validar);
+    };
+
+    validar.optional = () => {
+        config = {
+            ...config,
+            optional: true,
+            required: false,
+        };
+        return chainable(validar);
+    };
+
+    return chainable(validar);
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* EXPORT ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+export type { Interface_Validadores_Object_Chain };
+export const Validadores_Object = Build_Validadores_Object();
+// usePropTypes/validadores/Validadores_String.tsx
+//Validadores_String.tsx
+import { Consts_Validadores } from './Constants';
+import type { Type_Validadores_Response_Basic } from './Types';
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*INTERFACES ------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+interface Interface_Validadores_String {
+    /** 
+     * Valida que el valor sea un string.
+     * @param valor - Valor a validar.
+     * @returns true si el valor es un string, de lo contrario un mensaje de error.
+     */
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    /**
+     * Valida que el valor sea un string y no esté vacío.
+     * @param valor - Valor a validar.
+     * @param mensaje - Mensaje opcional de error si la validación falla. El usuario puede especificar un mensaje personalizado o no
+     * @returns true si el valor es un string no vacío, de lo contrario un mensaje de error.
+     */
+    required(mensaje?: string | undefined): Interface_Validadores_String;
+
+    /**
+     * Valida que el valor sea un string y tenga una longitud mínima.
+     * @param longitud - Longitud mínima permitida.
+     * @param mensaje - Mensaje de error si la validación falla.
+     * @returns Función de validación.
+     */
+    min(longitud: number, mensaje?: string | undefined): Interface_Validadores_String;
+
+    /**
+     * Valida que el valor sea un string y tenga una longitud máxima.
+     * @param longitud - Longitud máxima permitida.
+     * @param mensaje - Mensaje de error si la validación falla.
+     * @returns Función de validación.
+     */
+    max(longitud: number, mensaje?: string | undefined): Interface_Validadores_String;
+
+    /**
+     * Valida que el valor sea un string y tenga una longitud exacta.
+     * @param longitud - Longitud exacta permitida.
+     * @param mensaje - Mensaje de error si la validación falla.
+     * @returns Función de validación.
+     */
+    exact(longitud: number, mensaje?: string | undefined): Interface_Validadores_String;
+
+    /**
+     * Valida que el valor sea un string y contenga solo letras.
+     * @param valor - Valor a validar.
+     * @param mensaje - Mensaje de error si la validación falla.
+     * @returns true si el valor es un string con letras, de lo contrario un mensaje de error.
+     */
+    onlyLetters(mensaje?: string | undefined): Interface_Validadores_String;
+
+    /**
+     * Valida que el valor sea un string y contenga solo números.
+     * @param valor - Valor a validar.
+     * @param mensaje - Mensaje de error si la validación falla.
+     * @returns true si el valor es un string con números, de lo contrario un mensaje de error.
+     */
+    onlyNumbers(mensaje?: string | undefined): Interface_Validadores_String;
+
+    /**
+     * Valida que el valor sea un string y contenga solo letras y números.
+     * @param valor - Valor a validar.
+     * @param mensaje - Mensaje de error si la validación falla.
+     * @returns true si el valor es un string con letras y números, de lo contrario un mensaje de error.
+     */
+    alphanumeric(mensaje?: string | undefined): Interface_Validadores_String;
+
+    /**
+     * Valida que el valor sea un string y cumpla con una expresión regular.
+     * @param expresion - Expresión regular a validar.
+     * @param mensaje - Mensaje de error si la validación falla.
+     * @returns Función de validación.
+     */
+    regex( expresion: RegExp, mensaje?: string | undefined ): Interface_Validadores_String;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.string;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*BUILDER ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+function Build_Validadores_String(): Interface_Validadores_String {
+
+
+
+    /*MAIN --------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+        if (typeof valor !== 'string') {
+            return 'Error: El valor proporcionado no es un string.';
+        }
+        return true;
+    };
+
+
+
+    /*CHAINABLED BUILDER ------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_String {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea un string
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (!valor || (typeof valor === 'string' && valor.trim() === '')) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
+            min: (longitud: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (str.length < longitud) {
+                        return mensaje || `Error: Debe tener al menos ${longitud} caracteres.`;
+                    }
+
+                    return true;
+                }),
+
+            max: (longitud: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (str.length > longitud) {
+                        return mensaje || `Error: No puede superar los ${longitud} caracteres.`;
+                    }
+
+                    return true;
+                }),
+
+            exact: (longitud: number, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (str.length !== longitud) {
+                        return mensaje || `Error: Debe tener exactamente ${longitud} caracteres.`;
+                    }
+
+                    return true;
+                }),
+
+            onlyLetters: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (!/^[a-zA-Z]+$/.test(str)) {
+                        return mensaje || 'Error: Solo se permiten letras.';
+                    }
+
+                    return true;
+                }),
+
+            onlyNumbers: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (!/^[0-9]+$/.test(str)) {
+                        return mensaje || 'Error: Solo se permiten números.';
+                    }
+
+                    return true;
+                }),
+
+            alphanumeric: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (!/^[a-zA-Z0-9]+$/.test(str)) {
+                        return mensaje || 'Error: Solo se permiten letras y números.';
+                    }
+
+                    return true;
+                }),
+
+            regex: (expresion: RegExp, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const str = valor as string;
+                    if (!expresion.test(str)) {
+                        return mensaje || 'Error: El valor no coincide con el patrón requerido.';
+                    }
+
+                    return true;
+                }),
+
+            type: Consts_Validadores.types.string,
+        }) as Interface_Validadores_String;
+    }
+    
+
+
+    /*CHAINED METHODS ---------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    // -- no apply
+
+
+
+    /*RETURN ------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    return chainable(validar) as Interface_Validadores_String;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*EXPORT ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+export type { Interface_Validadores_String };
+export const Validadores_String = Build_Validadores_String();
+// usePropTypes/validadores/Validadores_Symbol.tsx
+import { Consts_Validadores } from './Constants';
+import type { Type_Validadores_Response_Basic } from './Types';
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* TYPES ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+//-- no apply
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+interface Interface_Validadores_Symbol {
+    /**
+     * Valida que el valor sea exactamente un `symbol`.
+     * @param valor - Valor a validar.
+     * @returns true si es symbol, sino un mensaje de error.
+     */
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    /**
+     * Valida que el valor no sea null/undefined y sea `symbol`.
+     * @param mensaje - Mensaje opcional de error si falla la validación.
+     * @returns Función de validación encadenable.
+     */
+    required(mensaje?: string): Interface_Validadores_Symbol;
+
+    /**
+     * Tipo de validador.
+     * @returns El tipo de validador.
+     */
+    type: typeof Consts_Validadores.types.symbol;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* BUILDER --------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+function Build_Validadores_Symbol(): Interface_Validadores_Symbol {
+
+
+
+    /* MAIN -------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+        if (typeof valor !== 'symbol') {
+            return 'Error: El valor debe ser `symbol`.';
+        }
+        return true;
+    };
+
+
+
+    /* CHAINABLE UTILITY ------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_Symbol {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea `symbol`
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (valor === null || valor === undefined) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
+            type: Consts_Validadores.types.symbol,
+        }) as Interface_Validadores_Symbol;
+    }
+
+
+
+    /* CHAINED METHODS --------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    // -- no apply
+
+
+
+    /* RETURN -----------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    return chainable(validar) as Interface_Validadores_Symbol;
+}
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* EXPORT ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+export type { Interface_Validadores_Symbol };
+export const Validadores_Symbol = Build_Validadores_Symbol();

@@ -4,12 +4,10 @@ import { Validadores_Array } from "./Validadores_Array";
 import { Validadores_BigInt } from "./Validadores_BigInt";
 import { Validadores_Boolean } from "./Validadores_Boolean";
 import { Validadores_InstanceOf } from "./Validadores_InstanceOf";
-import { Validadores_Null } from "./Validadores_Null";
 import { Validadores_Number } from "./Validadores_Number";
 import { Validadores_Object } from "./Validadores_Object";
 import { Validadores_String } from "./Validadores_String";
 import { Validadores_Symbol } from "./Validadores_Symbol";
-import { Validadores_Undefined } from "./Validadores_Undefined";
 
 
 
@@ -38,8 +36,6 @@ interface Interface_Validadores {
     number: typeof Validadores_Number & { type: typeof Consts_Validadores.types.number };
     bigint: typeof Validadores_BigInt & { type: typeof Consts_Validadores.types.bigint };
     boolean: typeof Validadores_Boolean & { type: typeof Consts_Validadores.types.boolean };
-    undefined: typeof Validadores_Undefined & { type: typeof Consts_Validadores.types.undefined };
-    null: typeof Validadores_Null & { type: typeof Consts_Validadores.types.null };
     symbol: typeof Validadores_Symbol & { type: typeof Consts_Validadores.types.symbol };
     array: typeof Validadores_Array & { type: typeof Consts_Validadores.types.array };
     instanceof: typeof Validadores_InstanceOf & { type: typeof Consts_Validadores.types.instanceof };
@@ -59,8 +55,6 @@ const Validadores: Interface_Validadores = {
     number: Validadores_Number,
     bigint: Validadores_BigInt,
     boolean: Validadores_Boolean,
-    undefined: Validadores_Undefined,
-    null: Validadores_Null,
     symbol: Validadores_Symbol,
     array: Validadores_Array,
     instanceof: Validadores_InstanceOf,
@@ -83,6 +77,23 @@ function getValidatorType(validator: Type_Validador_Elemento): Type_Validador_El
     return undefined;
 }
 
+function isValidValidators(schemas: Interface_Validadores[keyof Interface_Validadores][] | Interface_Validadores[keyof Interface_Validadores]): Type_Validador_Elemento_Response {
+    const schemasArray = Array.isArray(schemas) ? schemas : [schemas];
+    const types = schemasArray.map(getValidatorType);
+
+    //validar que los validadores sean válidos
+    if (types.some(type => type === undefined)) {
+        //indicar cual es el validador inválido especificando su posición y nombre
+        const invalidIndex = types.findIndex(type => type === undefined);
+        // obtener el nombre del validador inválido
+        const invalidValidatorName = schemasArray[invalidIndex]?.name || 'desconocido';
+        // retornar un mensaje de error indicando el validador inválido
+        return `Error: El validador en la posición [${invalidIndex}] (${invalidValidatorName}) no es válido.`;
+    }
+
+    return undefined;
+}
+
 
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -91,6 +102,6 @@ function getValidatorType(validator: Type_Validador_Elemento): Type_Validador_El
 
 
 
-export { getValidatorType };
+export { getValidatorType, isValidValidators };
 export type { Interface_Validadores, Type_Validador_Elemento, Type_Validador_Elemento_Response };
 export default Validadores;

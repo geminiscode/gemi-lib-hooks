@@ -12,46 +12,32 @@ import type { Type_Validadores_Response_Basic } from './Types';
 
 interface Interface_Validadores_InstanceOf {
     /**
-     * Establece el valor a validar.
-     * @param valor - Valor a comprobar.
-     * @returns Objeto con métodos de validación encadenados.
+     * Valida que el valor sea una instancia de una clase específica.
+     * @param valor - Valor a validar.
+     * @returns true si es válido, sino un mensaje de error.
      */
-    valor(valor: unknown): Interface_Validadores_InstanceOf_Chain;
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    /**
+     * Establece la clase esperada para la validación.
+     * @param clase - Clase a comparar (ej. Date, Promise).
+     * @param mensaje - Mensaje opcional si falla la validación.
+     * @returns Función de validación encadenable.
+     */
+    instanceOf<T>(clase: new (...args: any[]) => T, mensaje?: string): Interface_Validadores_InstanceOf;
+
+    /**
+     * Establece la clase prohibida para la validación.
+     * @param clase - Clase a excluir (ej. String, Array).
+     * @param mensaje - Mensaje opcional si falla la validación.
+     * @returns Función de validación encadenable.
+     */
+    notInstanceOf<T>(clase: new (...args: any[]) => T, mensaje?: string): Interface_Validadores_InstanceOf;
 
     /**
      * Tipo de validador.
      */
     type: typeof Consts_Validadores.types.instanceof;
-}
-
-interface Interface_Validadores_InstanceOf_Chain {
-    /**
-     * Valida que el valor sea una instancia de la clase especificada.
-     *
-     * @example
-     * ```ts
-     * Validadores_InstanceOf.valor(new Date()).instanceOf(Date); // true
-     * Validadores_InstanceOf.valor(Promise.resolve()).instanceOf(Promise); // true
-     * ```
-     *
-     * @param clase - Clase esperada (ej. Date, Promise, etc.)
-     * @returns Resultado de la validación (`true` o mensaje de error).
-     */
-    instanceOf<T>(clase: new (...args: any[]) => T): Type_Validadores_Response_Basic;
-
-    /**
-     * Valida que el valor NO sea una instancia de la clase especificada.
-     *
-     * @example
-     * ```ts
-     * Validadores_InstanceOf.valor(new Date()).notInstanceOf(String); // true
-     * Validadores_InstanceOf.valor([]).notInstanceOf(Array); // false
-     * ```
-     *
-     * @param clase - Clase esperada.
-     * @returns Resultado de la validación (`true` o mensaje de error).
-     */
-    notInstanceOf<T>(clase: new (...args: any[]) => T): Type_Validadores_Response_Basic;
 }
 
 
@@ -63,7 +49,6 @@ interface Interface_Validadores_InstanceOf_Chain {
 
 
 function Build_Validadores_InstanceOf(): Interface_Validadores_InstanceOf {
-    let valorInterno: unknown = undefined;
 
 
 
@@ -72,12 +57,11 @@ function Build_Validadores_InstanceOf(): Interface_Validadores_InstanceOf {
 
 
 
-    const chain = {
-        valor(valor: unknown) {
-            valorInterno = valor;
-            return chainMethods;
-        },
-        type: Consts_Validadores.types.instanceof,
+    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+        if (valor === null || valor === undefined) {
+            return 'Error: El valor no puede ser null ni undefined.';
+        }
+        return true;
     };
 
 
@@ -87,36 +71,85 @@ function Build_Validadores_InstanceOf(): Interface_Validadores_InstanceOf {
 
 
 
-    const chainMethods: Interface_Validadores_InstanceOf_Chain = {
-        instanceOf(clase) {
-            const className = clase.name || 'Clase desconocida';
-            if (valorInterno instanceof clase) {
-                return true;
-            }
-            const receivedType =
-                valorInterno != null
-                    ? valorInterno.constructor?.name || typeof valorInterno
-                    : typeof valorInterno;
-            return `Error: El valor debe ser una instancia de ${className}, pero se recibió un valor de tipo ${receivedType}.`;
-        },
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_InstanceOf {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que no sea null/undefined
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
 
-        notInstanceOf(clase) {
-            const className = clase.name || 'Clase desconocida';
-            if (!(valorInterno instanceof clase)) {
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            instanceOf: createInstanceOfMethod(combinedValidator),
+            notInstanceOf: createNotInstanceOfMethod(combinedValidator),
+            type: Consts_Validadores.types.instanceof,
+        }) as Interface_Validadores_InstanceOf;
+    }
+
+
+
+    /*CHAINED METHODS ---------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    function createInstanceOfMethod(
+        combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
+    ): <T>(clase: new (...args: any[]) => T, mensaje?: string) => Interface_Validadores_InstanceOf {
+        return function <T>(
+            clase: new (...args: any[]) => T,
+            mensaje?: string
+        ): Interface_Validadores_InstanceOf {
+            return chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+
+                const className = clase.name || 'Clase desconocida';
+                const receivedType = valor?.constructor?.name || typeof valor;
+
+                if (!(valor instanceof clase)) {
+                    return mensaje || `Error: El valor debe ser una instancia de ${className}, pero se recibió un valor de tipo ${receivedType}.`;
+                }
+
                 return true;
-            }
-            return `Error: El valor NO debe ser una instancia de ${className}.`;
-        },
-    };
+            });
+        };
+    }
+
+    function createNotInstanceOfMethod(
+        combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
+    ): <T>(clase: new (...args: any[]) => T, mensaje?: string) => Interface_Validadores_InstanceOf {
+        return function <T>(
+            clase: new (...args: any[]) => T,
+            mensaje?: string
+        ): Interface_Validadores_InstanceOf {
+            return chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+
+                const className = clase.name || 'Clase desconocida';
+
+                if (valor instanceof clase) {
+                    return mensaje || `Error: El valor NO debe ser una instancia de ${className}.`;
+                }
+
+                return true;
+            });
+        };
+    }
+
 
     
-
     /*RETURN ------------------------------------------------------------------------------------*/
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
 
 
-    return chain;
+    return chainable(validar) as Interface_Validadores_InstanceOf;
 }
 
 
@@ -127,5 +160,5 @@ function Build_Validadores_InstanceOf(): Interface_Validadores_InstanceOf {
 
 
 
-export type { Interface_Validadores_InstanceOf, Interface_Validadores_InstanceOf_Chain };
+export type { Interface_Validadores_InstanceOf };
 export const Validadores_InstanceOf = Build_Validadores_InstanceOf();

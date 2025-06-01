@@ -20,7 +20,6 @@ import type { Type_Validadores_Response_Basic } from './Types';
 
 
 interface Interface_Validadores_BigInt {
-
     /**
      * Valida que el valor sea exactamente un `bigint`.
      * @param valor - Valor a validar.
@@ -29,10 +28,27 @@ interface Interface_Validadores_BigInt {
     (valor: unknown): Type_Validadores_Response_Basic;
 
     /**
-     * Valida que el valor **no** sea `bigint`.
+     * Valida que el valor NO sea null/undefined y sea `bigint`.
+     * @param mensaje - Mensaje opcional de error.
      * @returns Función de validación encadenable.
      */
-    required(): Interface_Validadores_BigInt;
+    required(mensaje?: string): Interface_Validadores_BigInt;
+
+    /**
+     * Valida que el valor sea mayor o igual a cierto número.
+     * @param numero - Valor mínimo (number o bigint).
+     * @param mensaje - Mensaje opcional de error.
+     * @returns Función de validación encadenable.
+     */
+    min(numero: number | bigint, mensaje?: string): Interface_Validadores_BigInt;
+
+    /**
+     * Valida que el valor sea menor o igual a cierto número.
+     * @param numero - Valor máximo (number o bigint).
+     * @param mensaje - Mensaje opcional de error.
+     * @returns Función de validación encadenable.
+     */
+    max(numero: number | bigint, mensaje?: string): Interface_Validadores_BigInt;
 
     /**
      * Tipo de validador.
@@ -59,10 +75,10 @@ function Build_Validadores_BigInt(): Interface_Validadores_BigInt {
 
 
     const validar = (valor: unknown): Type_Validadores_Response_Basic => {
-        if (typeof valor === 'bigint') {
-            return true;
+        if (typeof valor !== 'bigint') {
+            return 'Error: El valor debe ser `bigint`.';
         }
-        return 'Error: El valor debe ser `bigint`.';
+        return true;
     };
 
 
@@ -73,10 +89,60 @@ function Build_Validadores_BigInt(): Interface_Validadores_BigInt {
 
 
     function chainable(
-        fn: (valor: unknown) => Type_Validadores_Response_Basic
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
     ): Interface_Validadores_BigInt {
-        return Object.assign(fn, {
-            required: validar.required,
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea `bigint`
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (valor === null || valor === undefined) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
+            min: (numero: number | bigint, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const big = valor as bigint;
+                    const limite = BigInt(numero);
+
+                    if (big < limite) {
+                        return mensaje || `Error: Debe ser mayor o igual a ${limite}n.`;
+                    }
+
+                    return true;
+                }),
+
+            max: (numero: number | bigint, mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const big = valor as bigint;
+                    const limite = BigInt(numero);
+
+                    if (big > limite) {
+                        return mensaje || `Error: Debe ser menor o igual a ${limite}n.`;
+                    }
+
+                    return true;
+                }),
+
             type: Consts_Validadores.types.bigint,
         }) as Interface_Validadores_BigInt;
     }
@@ -88,14 +154,7 @@ function Build_Validadores_BigInt(): Interface_Validadores_BigInt {
 
 
 
-    validar.required = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            if (typeof valor !== 'bigint') {
-                return true;
-            }
-            return 'Error: Este campo no puede ser `bigint`.';
-        });
-    };
+    // -- no apply
 
 
 
@@ -104,7 +163,7 @@ function Build_Validadores_BigInt(): Interface_Validadores_BigInt {
 
 
 
-    return validar as Interface_Validadores_BigInt;
+    return chainable(validar) as Interface_Validadores_BigInt;
 }
 
 

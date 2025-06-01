@@ -26,11 +26,13 @@ interface Interface_Validadores_Symbol {
      * @returns true si es symbol, sino un mensaje de error.
      */
     (valor: unknown): Type_Validadores_Response_Basic;
+
     /**
-     * Valida que el valor **no** sea `symbol`.
+     * Valida que el valor no sea null/undefined y sea `symbol`.
+     * @param mensaje - Mensaje opcional de error si falla la validación.
      * @returns Función de validación encadenable.
      */
-    required(): Interface_Validadores_Symbol;
+    required(mensaje?: string): Interface_Validadores_Symbol;
 
     /**
      * Tipo de validador.
@@ -57,10 +59,10 @@ function Build_Validadores_Symbol(): Interface_Validadores_Symbol {
 
 
     const validar = (valor: unknown): Type_Validadores_Response_Basic => {
-        if (typeof valor === 'symbol') {
-            return true;
+        if (typeof valor !== 'symbol') {
+            return 'Error: El valor debe ser `symbol`.';
         }
-        return 'Error: El valor debe ser `symbol`.';
+        return true;
     };
 
 
@@ -71,10 +73,30 @@ function Build_Validadores_Symbol(): Interface_Validadores_Symbol {
 
 
     function chainable(
-        fn: (valor: unknown) => Type_Validadores_Response_Basic
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
     ): Interface_Validadores_Symbol {
-        return Object.assign(fn, {
-            required: validar.required,
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea `symbol`
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (valor === null || valor === undefined) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
             type: Consts_Validadores.types.symbol,
         }) as Interface_Validadores_Symbol;
     }
@@ -86,14 +108,7 @@ function Build_Validadores_Symbol(): Interface_Validadores_Symbol {
 
 
 
-    validar.required = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            if (typeof valor !== 'symbol') {
-                return true;
-            }
-            return 'Error: Este campo no puede ser `symbol`.';
-        });
-    };
+    // -- no apply
 
 
 
@@ -102,7 +117,7 @@ function Build_Validadores_Symbol(): Interface_Validadores_Symbol {
 
 
 
-    return validar as Interface_Validadores_Symbol;
+    return chainable(validar) as Interface_Validadores_Symbol;
 }
 
 

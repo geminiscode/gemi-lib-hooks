@@ -20,21 +20,24 @@ interface Interface_Validadores_Boolean {
 
     /**
      * Valida que el valor no sea null ni undefined.
+     * @param mensaje - Mensaje opcional de error si falla la validación.
      * @returns Función de validación.
      */
-    required(): Interface_Validadores_Boolean;
+    required(mensaje?: string): Interface_Validadores_Boolean;
 
     /**
      * Valida que el valor sea exactamente `true`.
+     * @param mensaje - Mensaje opcional de error si falla la validación.
      * @returns Función de validación.
      */
-    true(): Interface_Validadores_Boolean;
+    true(mensaje?: string): Interface_Validadores_Boolean;
 
     /**
      * Valida que el valor sea exactamente `false`.
+     * @param mensaje - Mensaje opcional de error si falla la validación.
      * @returns Función de validación.
      */
-    false(): Interface_Validadores_Boolean;
+    false(mensaje?: string): Interface_Validadores_Boolean;
 
     /**
      * Valida con una función personalizada.
@@ -82,13 +85,68 @@ function Build_Validadores_Boolean(): Interface_Validadores_Boolean {
 
 
     function chainable(
-        fn: (valor: unknown) => Type_Validadores_Response_Basic
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
     ): Interface_Validadores_Boolean {
-        return Object.assign(fn, {
-            required: validar.required,
-            true: validar.true,
-            false: validar.false,
-            custom: validar.custom,
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            // Primero valida que sea boolean
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+
+            // Luego aplica la nueva regla
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            required: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    if (valor === null || valor === undefined) {
+                        return mensaje || 'Error: Este campo es requerido.';
+                    }
+
+                    return true;
+                }),
+
+            true: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const bool = valor as boolean;
+
+                    if (bool !== true) {
+                        return mensaje || 'Error: El valor debe ser verdadero.';
+                    }
+
+                    return true;
+                }),
+
+            false: (mensaje?: string) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const bool = valor as boolean;
+
+                    if (bool !== false) {
+                        return mensaje || 'Error: El valor debe ser falso.';
+                    }
+
+                    return true;
+                }),
+
+            custom: (fn: (value: boolean) => Type_Validadores_Response_Basic) =>
+                chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    if (typeof result === 'string') return result;
+
+                    const bool = valor as boolean;
+
+                    return fn(bool);
+                }),
+
             type: Consts_Validadores.types.boolean,
         }) as Interface_Validadores_Boolean;
     }
@@ -100,59 +158,7 @@ function Build_Validadores_Boolean(): Interface_Validadores_Boolean {
 
 
 
-    validar.required = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            if (valor === null || valor === undefined) {
-                return 'Error: Este campo es requerido.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.true = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const bool = valor as boolean;
-
-            if (bool !== true) {
-                return 'Error: El valor debe ser verdadero.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.false = () => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const bool = valor as boolean;
-
-            if (bool !== false) {
-                return 'Error: El valor debe ser falso.';
-            }
-
-            return true;
-        });
-    };
-
-    validar.custom = (fn: (value: boolean) => Type_Validadores_Response_Basic) => {
-        return chainable((valor: unknown): Type_Validadores_Response_Basic => {
-            const result = validar(valor);
-            if (typeof result === 'string') return result;
-
-            const bool = valor as boolean;
-
-            return fn(bool);
-        });
-    };
+    // -- no apply
 
 
 
@@ -161,7 +167,7 @@ function Build_Validadores_Boolean(): Interface_Validadores_Boolean {
 
 
 
-    return validar as Interface_Validadores_Boolean;
+    return chainable(validar) as Interface_Validadores_Boolean;
 }
 
 
