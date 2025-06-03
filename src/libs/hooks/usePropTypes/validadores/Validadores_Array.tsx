@@ -1,6 +1,6 @@
-import type { Type_Validadores_Response_Basic, Type_Validadores } from "./Types";
-import { getValidatorType, isValidValidators, type Interface_Validadores } from "./Validadores";
 import { Consts_Validadores } from "./Constants";
+import { Interface_Validadores, Type_Validadores_Response_Basic } from "./Types";
+import { getValidatorType, isValidValidators } from "./Utils";
 
 
 
@@ -295,4 +295,4 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
 
 
 export type { Interface_Validadores_Array };
-export const Validadores_Array = Build_Validadores_Array();
+export const Validadores_Array = Build_Validadores_Array();;

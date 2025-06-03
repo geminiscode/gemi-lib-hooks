@@ -39,46 +39,6 @@ export {Consts_Validadores};
  *  -   Estos tipos son utilizados para definir la estructura de los validadores y asegurar que se cumplan las 
  *  expectativas de entrada y salida.
  */
-
-
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* TYPES ----------------------------------------------------------------------------------------*/
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-
-
-// Definición de respuesta para los validadores
-type Type_Validadores_Response_Basic = true | string;
-
-
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* INTERFACES -----------------------------------------------------------------------------------*/
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-
-
-// Interfaz para validar funciones que pueden recibir 1 o 2 argumentos
-interface Type_Validadores {
-    // Versión básica: solo valor
-    (valor: unknown): Type_Validadores_Response_Basic;
-
-    // Versión extendida: valor + esquema u otro dato
-    (valor: unknown, esquema: any): Type_Validadores_Response_Basic;
-}
-
-
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* EXPORT ---------------------------------------------------------------------------------------*/
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-
-
-export type { Type_Validadores, Type_Validadores_Response_Basic };
-// usePropTypes/validadores/Validadores.tsx
-// Validadores.tsx
 import { Consts_Validadores } from "./Constants";
 import { Validadores_Array } from "./Validadores_Array";
 import { Validadores_BigInt } from "./Validadores_BigInt";
@@ -97,21 +57,34 @@ import { Validadores_Symbol } from "./Validadores_Symbol";
 
 
 
+// Definición de respuesta para los validadores
+export type Type_Validadores_Response_Basic = true | string;
 
 // Tipo para cada campo del esquema: string | number | boolean, etc.
-type Type_Validador_Elemento = Interface_Validadores[keyof Interface_Validadores];
+export type Type_Validador_Elemento = Interface_Validadores[keyof Interface_Validadores];
 
-type Type_Validador_Elemento_Response = string | undefined;
+// Tipo para cada validacion de esquema que genere una respuesta
+export type Type_Validador_Elemento_Response = string | undefined;
 
 
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/*INTERFACES ------------------------------------------------------------------------------------*/
+/* INTERFACES -----------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 
 
-interface Interface_Validadores {
+// Interfaz para validar funciones que pueden recibir 1 o 2 argumentos
+export interface Type_Validadores {
+    // Versión básica: solo valor
+    (valor: unknown): Type_Validadores_Response_Basic;
+
+    // Versión extendida: valor + esquema u otro dato
+    (valor: unknown, esquema: any): Type_Validadores_Response_Basic;
+}
+
+// Interfaz para conjunto de validaciones
+export interface Interface_Validadores {
     string: typeof Validadores_String & { type: typeof Consts_Validadores.types.string };
     number: typeof Validadores_Number & { type: typeof Consts_Validadores.types.number };
     bigint: typeof Validadores_BigInt & { type: typeof Consts_Validadores.types.bigint };
@@ -121,6 +94,69 @@ interface Interface_Validadores {
     instanceof: typeof Validadores_InstanceOf & { type: typeof Consts_Validadores.types.instanceof };
     object: typeof Validadores_Object & { type: typeof Consts_Validadores.types.object };
 }
+// usePropTypes/validadores/Utils.tsx
+import { Interface_Validadores, Type_Validador_Elemento, Type_Validador_Elemento_Response } from "./Validadores";
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*METHODS ---------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+// Función para obtener el tipo del validador
+export function getValidatorType(validator: Type_Validador_Elemento): Type_Validador_Elemento_Response {
+    if ('type' in validator) {
+      return (validator as { type: string }).type;
+    }
+    return undefined;
+}
+
+/* Función para validar si es o no un validador */
+export function isValidValidators(schemas: Interface_Validadores[keyof Interface_Validadores][] | Interface_Validadores[keyof Interface_Validadores]): Type_Validador_Elemento_Response {
+    const schemasArray = Array.isArray(schemas) ? schemas : [schemas];
+    const types = schemasArray.map(getValidatorType);
+
+    //validar que los validadores sean válidos
+    if (types.some(type => type === undefined)) {
+        //indicar cual es el validador inválido especificando su posición y nombre
+        const invalidIndex = types.findIndex(type => type === undefined);
+        // obtener el nombre del validador inválido
+        const invalidValidatorName = schemasArray[invalidIndex]?.name || 'desconocido';
+        // retornar un mensaje de error indicando el validador inválido
+        return `Error: El validador en la posición [${invalidIndex}] (${invalidValidatorName}) no es válido.`;
+    }
+
+    return undefined;
+}
+// usePropTypes/validadores/Validadores.tsx
+// Validadores.tsx
+import { Consts_Validadores } from "./Constants";
+import { Interface_Validadores, Type_Validador_Elemento, Type_Validador_Elemento_Response } from "./Types";
+import { Validadores_Array } from "./Validadores_Array";
+import { Validadores_BigInt } from "./Validadores_BigInt";
+import { Validadores_Boolean } from "./Validadores_Boolean";
+import { Validadores_InstanceOf } from "./Validadores_InstanceOf";
+import { Validadores_Number } from "./Validadores_Number";
+import { Validadores_Object } from "./Validadores_Object";
+import { Validadores_String } from "./Validadores_String";
+import { Validadores_Symbol } from "./Validadores_Symbol";
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* TYPES ----------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/*INTERFACES ------------------------------------------------------------------------------------*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
 
 
 
@@ -144,40 +180,25 @@ const Validadores: Interface_Validadores = {
 
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/*METHODS ---------------------------------------------------------------------------------------*/
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-
-
-// Función para obtener el tipo del validador
-function getValidatorType(validator: Type_Validador_Elemento): Type_Validador_Elemento_Response {
-    if ('type' in validator) {
-      return (validator as { type: string }).type;
-    }
-    return undefined;
-}
-
-
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /*EXPORT ----------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 
 
-export { getValidatorType };
 export type { Interface_Validadores, Type_Validador_Elemento, Type_Validador_Elemento_Response };
 export default Validadores;
 // usePropTypes/validadores/Validadores_Array.tsx
-import type { Type_Validadores_Response_Basic, Type_Validadores } from "./Types";
-import { getValidatorType, type Interface_Validadores } from "./Validadores";
-import { Consts_Validadores } from "./Constants";
+
 
 
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TYPES ----------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+import { Consts_Validadores } from "./Constants";
+import { Interface_Validadores, Type_Validadores_Response_Basic } from "./Types";
+import { getValidatorType, isValidValidators } from "./Utils";
 
 
 
@@ -191,33 +212,41 @@ import { Consts_Validadores } from "./Constants";
 
 
 
+/**
+ * Configuración del validador de arrays.
+ */
 interface Config {
     /**
      * Indica si el array puede estar vacío.
      * @default false
      */
     optionalEmpty?: boolean;
+
     /**
      * Longitud mínima permitida del array.
      * @default 0
      */
     minLength?: number;
+
     /**
      * Longitud máxima permitida del array.
      * @default Infinity
      */
     maxLength?: number;
-    /**
-     * Tipos/validadores permitidos para cualquier elemento del array.
-     */
-    of?: Interface_Validadores[keyof Interface_Validadores][];
 }
 
+
+
+/**
+ * Interfaz principal del validador de arrays.
+ *
+ * Se puede invocar directamente o encadenar métodos como `.minLength()`, `.of()` etc.
+ */
 interface Interface_Validadores_Array {
     /**
      * Valida que el valor sea un array y cumpla con las condiciones definidas.
      * @param valor - Valor a validar.
-     * @returns true si es válido, sino un mensaje de error.
+     * @returns `true` si es válido, sino un mensaje de error.
      */
     (valor: unknown): Type_Validadores_Response_Basic;
 
@@ -242,13 +271,23 @@ interface Interface_Validadores_Array {
     maxLength(length: number): Interface_Validadores_Array;
 
     /**
-     * Define los tipos/validadores permitidos para cualquier elemento del array.
-     * Un elemento pasa si es aceptado por **al menos uno** de los validadores.
-     * @param schema - Esquema para validar elementos.
-     * @returns Función de validación actualizada.
+     * Valida que todos los elementos del array sean del **mismo tipo/validador**.
+     * @param schema - Un único validador que deben cumplir **todos** los elementos.
+     * @returns Función de validación encadenable.
      */
-    of(schema: Interface_Validadores[keyof Interface_Validadores] | Interface_Validadores[keyof Interface_Validadores][]): Interface_Validadores_Array;
+    ofOne(
+        schema: Interface_Validadores[keyof Interface_Validadores]
+    ): Interface_Validadores_Array;
 
+    /**
+     * Valida que cada elemento del array cumpla **con al menos uno** de los validadores dados.
+     * @param schemas - Lista de validadores para comprobar cada elemento.
+     * @returns Función de validación encadenable.
+     */
+    ofAny(
+        ...schemas: Interface_Validadores[keyof Interface_Validadores][]
+    ): Interface_Validadores_Array;
+    
     /**
      * Configura opciones avanzadas del validador.
      * @param config - Objeto con configuraciones como `minLength`, `maxLength`, etc.
@@ -258,7 +297,6 @@ interface Interface_Validadores_Array {
 
     /**
      * Tipo de validador.
-     * @returns El tipo de validador.
      */
     type: typeof Consts_Validadores.types.array;
 }
@@ -284,96 +322,7 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
         if (!Array.isArray(valor)) {
             return "Error: El valor proporcionado no es un array.";
         }
-
-        const config = baseValidator.__internalConfig || {
-            optionalEmpty: false,
-            minLength: 0,
-            maxLength: Infinity,
-            of: undefined,
-        };
-
-        const length = valor.length;
-
-        // Validar longitud mínima
-        if (length < config.minLength!) {
-            return `Error: El array debe tener al menos ${config.minLength} elementos.`;
-        }
-
-        // Validar longitud máxima
-        if (length > config.maxLength!) {
-            return `Error: El array no puede tener más de ${config.maxLength} elementos.`;
-        }
-
-        // Si está vacío y no se permite
-        if (length === 0 && !config.optionalEmpty) {
-            return "Error: El array no puede estar vacío.";
-        }
-
-        // Validar elementos si hay esquema definido
-        if (config.of?.length) {
-            for (let i = 0; i < length; i++) {
-                const element = valor[i];
-                let isValid = false;
-                let firstError: string | null = null;
-
-                // Obtener el tipo nativo del valor (string, number, boolean, etc.)
-                const elementType = typeof element;
-
-                // Filtrar solo los validadores que corresponden al tipo del valor
-                const matchingValidators = config.of.filter((validator) => {
-                    const validatorType = getValidatorType(validator);
-                    return validatorType === elementType;
-                });
-
-                // Si hay validadores que coinciden con el tipo, usarlos
-                if (matchingValidators.length > 0) {
-                    for (const validator of matchingValidators) {
-                        if (typeof validator === "function") {
-                            const result = validator(element);
-
-                            if (result === true) {
-                                isValid = true;
-                                break;
-                            } else if (!firstError && typeof result === "string") {
-                                firstError = result;
-                            }
-                        }
-                    }
-                } else {
-                    // Si ningún validador corresponde al tipo del valor
-                    const allowedTypes = config.of
-                        .map((v) => getValidatorType(v) || 'desconocido')
-                        .join(', ');
-
-                    return `Error en posición [${i}]: Tipo "${elementType}" no permitido. Se esperaba: ${allowedTypes}. Valor recibido: ${element}`;
-                }
-
-                if (!isValid && firstError) {
-                    return `Error en posición [${i}]: ${firstError}`;
-                }
-
-                if (!isValid) {
-                    const allowedTypes = config.of
-                        .map((v) => getValidatorType(v) || 'desconocido')
-                        .join(', ');
-
-                    return `Error en posición [${i}]: El valor no coincide con ninguno de los tipos permitidos: ${allowedTypes}`;
-                }
-            }
-        }
-
         return true;
-    };
-
-    const baseValidator = validar as Interface_Validadores_Array & {
-        __internalConfig?: Config;
-    };
-
-    baseValidator.__internalConfig = {
-        optionalEmpty: false,
-        minLength: 0,
-        maxLength: Infinity,
-        of: undefined,
     };
 
 
@@ -383,14 +332,130 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
 
 
 
-    function chainable(fn: Type_Validadores): Interface_Validadores_Array {
-        return Object.assign(fn, {
-            optionalEmpty: validar.optionalEmpty,
-            minLength: validar.minLength,
-            maxLength: validar.maxLength,
-            of: validar.of,
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_Array {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+            return nuevaValidacion(valor);
+        };
+
+        return Object.assign(combinedValidator, {
+            optionalEmpty: () => chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+                const arr = valor as unknown[];
+                if (arr.length === 0) return true;
+                return result;
+            }),
+
+            minLength: (length: number) => chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+                const arr = valor as unknown[];
+                if (arr.length < length) {
+                    return `Error: El array debe tener al menos ${length} elementos.`;
+                }
+                return true;
+            }),
+
+            maxLength: (length: number) => chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+                const arr = valor as unknown[];
+                if (arr.length > length) {
+                    return `Error: El array no puede tener más de ${length} elementos.`;
+                }
+                return true;
+            }),
+
+            ofOne: (schema: Interface_Validadores[keyof Interface_Validadores]) => {
+                return chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    const isValid = isValidValidators(schema);
+                    if (typeof result === 'string') return result;
+                    if (typeof isValid === 'string') return isValid;
+
+                    const arr = valor as unknown[];
+                    const validator = schema as (value: unknown) => Type_Validadores_Response_Basic;
+
+                    for (let i = 0; i < arr.length; i++) {
+                        const element = arr[i];
+                        const res = validator(element);
+
+                        if (res !== true) {
+                            return `Error en indice ${i}: ${res}`;
+                        }
+                    }
+
+                    return true;
+                });
+            },
+
+            ofAny: (...schemas: Interface_Validadores[keyof Interface_Validadores][]) => {
+                return chainable((valor) => {
+                    const result = combinedValidator(valor);
+                    const isValid = isValidValidators(schemas);
+                    if (typeof result === 'string') return result;
+                    if (typeof isValid === 'string') return isValid;
+
+                    const arr = valor as unknown[];
+                    
+                    for (let i = 0; i < arr.length; i++) {
+
+                        const element = arr[i];
+                        let isValid = false;
+                        let firstError: string | null = null;
+
+                        for (const schema of schemas) {
+                            const validator = schema as (value: unknown) => Type_Validadores_Response_Basic;
+                            const res = validator(element);
+
+                            if (res === true) {
+                                isValid = true;
+                                break;
+                            } else if (!firstError && typeof res === 'string') {
+                                firstError = res;
+                            }
+                        }
+
+                        if (!isValid) {
+                            const allowedTypes = schemas.map(getValidatorType).join(', ');
+                            const receivedType = typeof element;
+                            return `
+                            Error en posición [${i}]: Tipo "${receivedType}" no permitido. Se esperaba: ${allowedTypes}. Valor recibido: ${element}
+                            ${firstError ? `Detalle: ${firstError}` : ''}
+                            `;
+                        }
+                    }
+
+                    return true;
+                });
+            },
+
+            __config: (config: Partial<Config>) => chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+
+                const arr = valor as unknown[];
+
+                if (config.minLength !== undefined && arr.length < config.minLength) {
+                    return `Error: El array debe tener al menos ${config.minLength} elementos.`;
+                }
+
+                if (config.maxLength !== undefined && arr.length > config.maxLength) {
+                    return `Error: El array no puede tener más de ${config.maxLength} elementos.`;
+                }
+
+                if (!config.optionalEmpty && arr.length === 0) {
+                    return "Error: El array no puede estar vacío.";
+                }
+
+                return true;
+            }),
+
             type: Consts_Validadores.types.array,
-            __config: validar.__config,
         }) as Interface_Validadores_Array;
     }
 
@@ -401,47 +466,7 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
 
 
 
-    validar.optionalEmpty = () => {
-        baseValidator.__internalConfig = {
-            ...baseValidator.__internalConfig,
-            optionalEmpty: true,
-        };
-        return chainable(validar);
-    };
-
-    validar.minLength = (length: number) => {
-        baseValidator.__internalConfig = {
-            ...baseValidator.__internalConfig,
-            minLength: length,
-        };
-        return chainable(validar);
-    };
-
-    validar.maxLength = (length: number) => {
-        baseValidator.__internalConfig = {
-            ...baseValidator.__internalConfig,
-            maxLength: length,
-        };
-        return chainable(validar);
-    };
-
-    validar.of = (schema: Interface_Validadores[keyof Interface_Validadores] | Interface_Validadores[keyof Interface_Validadores][]) => {
-        const validators = Array.isArray(schema) ? schema : [schema];
-
-        baseValidator.__internalConfig = {
-            ...baseValidator.__internalConfig,
-            of: validators,
-        };
-        return chainable(validar);
-    };
-
-    validar.__config = (config: Partial<Config>): Interface_Validadores_Array => {
-        baseValidator.__internalConfig = {
-            ...baseValidator.__internalConfig,
-            ...config,
-        };
-        return chainable(validar);
-    };
+    // -- no apply
 
 
 
@@ -450,7 +475,7 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
 
     
 
-    return validar as Interface_Validadores_Array;
+    return chainable(validar) as Interface_Validadores_Array;
 }
 
 
@@ -1259,161 +1284,279 @@ function Build_Validadores_Number(): Interface_Validadores_Number {
 export type { Interface_Validadores_Number };
 export const Validadores_Number = Build_Validadores_Number();
 // usePropTypes/validadores/Validadores_Object.tsx
-// Validadores_Object.tsx
-import { Consts_Validadores } from './Constants';
-import type { Type_Validadores_Response_Basic } from './Types';
-import { getValidatorType, Interface_Validadores } from './Validadores';
+import type { Type_Validadores_Response_Basic, Type_Validadores, Interface_Validadores } from "./Types";
+import { Consts_Validadores } from "./Constants";
+import { isValidValidators } from "./Utils";
+
+
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TYPES ----------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-interface Interface_Config_Object_Property {
-    validator: (value: unknown) => Type_Validadores_Response_Basic;
-    isRequired: boolean;
-}
 
-interface Interface_Config_Object {
-    properties?: Record<string, Interface_Config_Object_Property>;
-    optional?: boolean;
-    allowUnknown?: boolean;
-    required?: boolean;
-}
+
+// -- no apply
+
+
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* INTERFACES -----------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-interface Interface_Validadores_Object_Chain {
+
+
+/**
+ * Configuración base para el validador de objetos.
+ */
+interface Config {
+    /**
+     * Indica si se permiten claves adicionales no definidas en el esquema.
+     * @default false
+     */
+    strict?: boolean;
+
+    /**
+     * Esquema de validación para cada propiedad del objeto.
+     */
+    shape?: Record<string, (value: unknown) => Type_Validadores_Response_Basic>;
+
+    /**
+     * Claves obligatorias que deben estar presentes en el objeto.
+     */
+    requiredKeys?: string[];
+
+    /**
+     * Validaciones para su posterior ejecucion por orden
+     */
+    validations?: Array<(obj: Record<string, unknown>) => Type_Validadores_Response_Basic>;
+}
+
+
+
+/**
+ * Interfaz principal del validador de objetos.
+ *
+ * Se puede invocar directamente o encadenar métodos como `.shape()`, `.strict()` etc.
+ */
+interface Interface_Validadores_Object {
+    /**
+     * Valida que el valor sea un objeto y cumpla con las condiciones definidas.
+     * @param valor - Valor a validar.
+     * @returns true si es válido, sino un mensaje de error.
+     */
     (valor: unknown): Type_Validadores_Response_Basic;
 
+    /**
+     * Define la forma esperada del objeto.
+     * @param schema - Objeto donde cada propiedad tiene su propio validador.
+     * @returns Función de validación actualizada.
+     */
     shape(
-        schema: Record<string, Interface_Validadores[keyof Interface_Validadores]>
-    ): Interface_Validadores_Object_Chain;
+        schema: Record<string, (value: unknown) => Type_Validadores_Response_Basic>
+    ): Interface_Validadores_Object;
 
-    allowUnknown(): Interface_Validadores_Object_Chain;
-    required(): Interface_Validadores_Object_Chain;
-    optional(): Interface_Validadores_Object_Chain;
+    /**
+     * El objeto NO puede tener claves adicionales fuera del esquema definido.
+     * @returns Función de validación actualizada.
+     */
+    strict(): Interface_Validadores_Object;
 
+    /**
+     * Marca ciertas claves como obligatorias, incluso si otras son opcionales.
+     * @param keys - Lista de claves que deben estar presentes.
+     * @returns Función de validación actualizada.
+     */
+    requiredKeys(keys: string[]): Interface_Validadores_Object;
+
+    /**
+     * Tipo de validador.
+     */
     type: typeof Consts_Validadores.types.object;
 }
+
+
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* BUILDER --------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-function Build_Validadores_Object(): Interface_Validadores_Object_Chain {
-    let config: Interface_Config_Object = {
-        properties: {},
-        optional: false,
-        allowUnknown: false,
+
+
+function Build_Validadores_Object(): Interface_Validadores_Object {
+
+    
+
+    /* MAIN -------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    const validar = (valor: unknown): Type_Validadores_Response_Basic => {
+        if (typeof valor !== 'object' || valor === null || Array.isArray(valor)) {
+            return 'Error: El valor proporcionado no es un objeto.';
+        }
+        return true;
     };
 
-    const validar = ((valor: unknown): Type_Validadores_Response_Basic => {
-        if (config.optional && valor === undefined) return true;
-        if (config.required && (valor === undefined || valor === null)) {
-            return 'Error: Este campo es requerido.';
-        }
-        if (typeof valor !== 'object' || Array.isArray(valor) || valor === null) {
-            return 'Error: El valor debe ser un objeto.';
-        }
 
-        const obj = valor as Record<string, unknown>;
 
-        // Validar propiedades definidas
-        for (const key in config.properties) {
-            const propConfig = config.properties[key];
-            const value = obj[key];
 
-            const result = propConfig.validator(value);
+    /* CHAINABLE UTILITY ------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
-            if (typeof result === 'string') {
-                return `Error en propiedad "${key}": ${result}`;
-            }
-        }
 
-        // Validar propiedades desconocidas
-        if (!config.allowUnknown) {
-            for (const key in obj) {
-                if (!(key in (config.properties || {}))) {
-                    return `Error: La propiedad "${key}" no está permitida en este objeto.`;
-                }
-            }
-        }
 
-        return true;
-    }) as Interface_Validadores_Object_Chain;
+    function chainable(
+        nuevaValidacion: (valor: unknown) => Type_Validadores_Response_Basic
+    ): Interface_Validadores_Object {
+        const combinedValidator = (valor: unknown): Type_Validadores_Response_Basic => {
+            const baseResult = validar(valor);
+            if (typeof baseResult === 'string') return baseResult;
+            return nuevaValidacion(valor);
+        };
 
-    validar.type = Consts_Validadores.types.object;
-
-    function chainable(fn: (valor: unknown) => Type_Validadores_Response_Basic): Interface_Validadores_Object_Chain {
-        return Object.assign(fn, {
-            shape: validar.shape,
-            allowUnknown: validar.allowUnknown,
-            required: validar.required,
-            optional: validar.optional,
+        return Object.assign(combinedValidator, {
+            shape: createShapeMethod(combinedValidator),
+            strict: createStrictMethod(combinedValidator),
+            requiredKeys: createRequiredKeysMethod(combinedValidator),
             type: Consts_Validadores.types.object,
-        }) as Interface_Validadores_Object_Chain;
+        }) as Interface_Validadores_Object;
     }
 
-    validar.shape = (schema) => {
-        const newProperties: Record<string, Interface_Config_Object_Property> = {};
 
-        for (const key in schema) {
-            const validator = schema[key];
-            const isRequired = getValidatorType(validator) !== 'undefined';
 
-            newProperties[key] = {
-                validator: validator as (value: unknown) => Type_Validadores_Response_Basic,
-                isRequired,
-            };
-        }
+    /* CHAINED METHODS --------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
 
-        config = {
-            ...config,
-            properties: {
-                ...(config.properties || {}),
-                ...newProperties,
-            },
+
+
+    function createShapeMethod(
+        combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
+    ) {
+        return function (
+            schema: Record<string, Interface_Validadores[keyof Interface_Validadores]>
+        ): Interface_Validadores_Object {
+            // Validamos que los validadores sean válidos
+            const validationError = isValidValidators(Object.values(schema));
+            if (typeof validationError === 'string') {
+                return chainable(() => validationError);
+            }
+
+            // Solo guardamos el esquema, sin ejecutar ninguna validación
+            config.shape = schema;
+
+            // Continuamos con el flujo encadenable
+            return chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+
+                // Aquí ya pueden actuar otros métodos encadenados
+                return true;
+            });
         };
+    }
 
-        return chainable(validar);
+    function createStrictMethod(
+        combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
+    ) {
+        return function (): Interface_Validadores_Object {
+            return chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+
+                const obj = valor as Record<string, unknown>;
+                const schemaKeys = Object.keys(config.shape || {});
+                const objKeys = Object.keys(obj);
+
+                // 1. Detectar claves faltantes
+                const missingKeys = schemaKeys.filter(key => !objKeys.includes(key));
+
+                // 2. Detectar claves adicionales
+                const extraKeys = objKeys.filter(key => !schemaKeys.includes(key));
+
+                // 3. Mostrar errores si hay
+                if (missingKeys.length > 0 && extraKeys.length > 0) {
+                    return `Error: El objeto tiene claves faltantes y no permitidas. ` +
+                        `Faltan: ${missingKeys.join(', ')}. ` +
+                        `No permitidas: ${extraKeys.join(', ')}.`;
+                }
+
+                if (missingKeys.length > 0) {
+                    return `Error: Faltan claves obligatorias: ${missingKeys.join(', ')}.`;
+                }
+
+                if (extraKeys.length > 0) {
+                    return `Error: El objeto contiene claves no permitidas: ${extraKeys.join(', ')}.`;
+                }
+
+                return true;
+            });
+        };
+    }
+
+    function createRequiredKeysMethod(
+        combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
+    ) {
+        return function (keys: string[]): Interface_Validadores_Object {
+            return chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+
+                const obj = valor as Record<string, unknown>;
+
+                const missingKeys = keys.filter(key => !(key in obj));
+
+                if (missingKeys.length > 0) {
+                    return `Error: Faltan claves obligatorias: ${missingKeys.join(', ')}.`;
+                }
+
+                return true;
+            });
+        };
+    }
+
+
+
+    /* CONFIG ---------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
+
+    const config: Config = {
+        strict: false,
+        shape: {},
+        requiredKeys: [],
     };
 
-    validar.allowUnknown = () => {
-        config = {
-            ...config,
-            allowUnknown: true,
-        };
-        return chainable(validar);
-    };
 
-    validar.required = () => {
-        config = {
-            ...config,
-            required: true,
-            optional: false,
-        };
-        return chainable(validar);
-    };
 
-    validar.optional = () => {
-        config = {
-            ...config,
-            optional: true,
-            required: false,
-        };
-        return chainable(validar);
-    };
+    /* UTILS ----------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-    return chainable(validar);
+
+
+    // -- no apply
+
+
+
+    /* RETURN ------------------------------------------------------------------------------------*/
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+
+    
+
+    return chainable(validar) as Interface_Validadores_Object;
 }
+
+
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* EXPORT ---------------------------------------------------------------------------------------*/
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-export type { Interface_Validadores_Object_Chain };
+
+
+export type { Interface_Validadores_Object };
 export const Validadores_Object = Build_Validadores_Object();
 // usePropTypes/validadores/Validadores_String.tsx
 //Validadores_String.tsx

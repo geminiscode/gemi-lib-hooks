@@ -1,6 +1,6 @@
-import type { Type_Validadores_Response_Basic, Type_Validadores } from "./Types";
-import { getValidatorType, isValidValidators, type Interface_Validadores } from "./Validadores";
+import type { Type_Validadores_Response_Basic, Type_Validadores, Interface_Validadores } from "./Types";
 import { Consts_Validadores } from "./Constants";
+import { isValidValidators } from "./Utils";
 
 
 
@@ -10,7 +10,10 @@ import { Consts_Validadores } from "./Constants";
 
 
 
-// -- no apply
+type ValidationStep = {
+    fn: (valor: unknown) => Type_Validadores_Response_Basic;
+    priority: number;
+};
 
 
 
@@ -79,6 +82,12 @@ interface Interface_Validadores_Object {
     requiredKeys(keys: string[]): Interface_Validadores_Object;
 
     /**
+     * Valida los valores del objeto según el esquema definido con `.shape()`.
+     * @returns Función de validación actualizada.
+     */
+    validateValues(): Interface_Validadores_Object;
+
+    /**
      * Tipo de validador.
      */
     type: typeof Consts_Validadores.types.object;
@@ -133,6 +142,7 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
             shape: createShapeMethod(combinedValidator),
             strict: createStrictMethod(combinedValidator),
             requiredKeys: createRequiredKeysMethod(combinedValidator),
+            validateValues: createValidateValuesMethod(combinedValidator),
             type: Consts_Validadores.types.object,
         }) as Interface_Validadores_Object;
     }
@@ -162,25 +172,10 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
             return chainable((valor) => {
                 const result = combinedValidator(valor);
                 if (typeof result === 'string') return result;
-
-                const obj = valor as Record<string, unknown>;
-
-                for (const key in schema) {
-                    const validator = schema[key];
-                    const value = obj[key];
-
-                    const res = validator(value);
-
-                    if (res !== true) {
-                        return `Error en propiedad "${key}": ${res}`;
-                    }
-                }
-
                 return true;
             });
         };
     }
-
 
     function createStrictMethod(
         combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
@@ -220,7 +215,6 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
         };
     }
 
-
     function createRequiredKeysMethod(
         combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
     ) {
@@ -241,6 +235,33 @@ function Build_Validadores_Object(): Interface_Validadores_Object {
             });
         };
     }
+
+    function createValidateValuesMethod(
+        combinedValidator: (valor: unknown) => Type_Validadores_Response_Basic
+    ) {
+        return function (): Interface_Validadores_Object {
+            return chainable((valor) => {
+                const result = combinedValidator(valor);
+                if (typeof result === 'string') return result;
+
+                const obj = valor as Record<string, unknown>;
+                const schema = config.shape || {};
+
+                for (const key in schema) {
+                    const validator = schema[key];
+                    const value = obj[key];
+                    console.log(key, value)
+                    const res = validator(value);
+                    if (res !== true) {
+                        return `Error en propiedad "${key}": ${res}`;
+                    }
+                }
+
+                return true;
+            });
+        };
+    }
+
 
 
     /* CONFIG ---------------------------------------------------------------------------------------*/

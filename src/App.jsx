@@ -13,16 +13,15 @@ function App() {
     const validateUser = Validadores.object.shape({
         id: Validadores.number.required(),
         nombre: Validadores.string.min(3),
-        email: Validadores.string,
-    }).requiredKeys(['id', 'nombre']);
+        email: Validadores.string.min(3),
+    }).requiredKeys(['id', 'nombre']).validateValues();
 
-    console.log(validateUser({ id: 123, nombre: 'Ana' })); // true ✅
-    console.log(validateUser({ nombre: 'Ana' })); // Error ❌ (falta "id")
-    console.log(validateUser({ id: 123 })); // Error ❌ (falta "nombre")
-    console.log(validateUser({ id: 123, nombre: 'Ana', edad: 30 })); // Error ❌ (clave no permitida)
+    console.log(validateUser({ id: 123, nombre: 'Ans'})); // true ✅
+    console.log(validateUser({ nombre: 'Ana', id: 100, email: "shs" })); // Error ❌ (falta "id")
+    console.log(validateUser({ id: 123, nombre: 'Ana', email: "shs" })); // Error ❌ (falta "nombre")
+    console.log(validateUser({ id: 123, nombre: 'Ana', email: "shs" })); // Error ❌ (clave no permitida)
 
 
-    return <PlatformerGame />;
 
     return (
         <>
