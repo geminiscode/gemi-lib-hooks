@@ -193,9 +193,7 @@ function Build_Validadores_Array(): Interface_Validadores_Array {
                         const res = validator(element);
 
                         if (res !== true) {
-                            const expectedType = getValidatorType(schema) || 'desconocido';
-                            const receivedType = typeof element;
-                            return `Error en posición [${i}]: Se esperaba un valor de tipo "${expectedType}", pero se recibió "${receivedType}".`;
+                            return `Error en indice ${i}: ${res}`;
                         }
                     }
 
